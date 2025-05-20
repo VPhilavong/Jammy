@@ -1,9 +1,9 @@
 services:
   db:
     restart: always
-    image: postgres:17-alpine3.21
+    image: postgres:17.5-bookworm
     ports:
-      - "5432:5432"
+      - "4545:5432"
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -15,21 +15,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-  pgadmin:
-    image: dpage/pgadmin4
-    ports:
-      - "5050:80"
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
-    depends_on:
-      - db
+  adminer:
+    image: adminer
     restart: always
+    ports:
+      - "8080:8080"
     
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    env_file: .env
     ports:
       - "8000:8000"
     volumes:
@@ -45,6 +41,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
   frontend:
     build:
       context: ./frontend
