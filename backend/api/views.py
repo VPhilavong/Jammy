@@ -61,3 +61,7 @@ def top_genres(request):
     genres = {genre: index + 1 for index, (genre, count) in enumerate(sorted_genres)}
 
     return Response(genres)
+
+@api_view(['GET'])
+def recommendations(request):
+    pass
