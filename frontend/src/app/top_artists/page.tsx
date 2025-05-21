@@ -32,8 +32,8 @@ export default function TopArtistsPage() {
       <h1 className="text-2xl font-bold mb-4">Your Top Artists</h1>
       {error && <p className="text-blue-500">Error: {error}</p>}
       <ul>
-        {artists.map((artist, index) => (
-          <li key={index} className="mb-4">
+        {artists.map((artist) => (
+          <li key={artist.name} className="mb-4">
             <img
               src={artist.images[0]?.url}
               alt={artist.name}
