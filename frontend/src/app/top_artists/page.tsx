@@ -30,7 +30,7 @@ export default function TopArtistsPage() {
   return (
     <main className="p-4">
       <h1 className="text-2xl font-bold mb-4">Your Top Artists</h1>
-      {error && <p className="text-red-500">Error: {error}</p>}
+      {error && <p className="text-blue-500">Error: {error}</p>}
       <ul>
         {artists.map((artist, index) => (
           <li key={index} className="mb-4">
