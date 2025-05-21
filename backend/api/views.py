@@ -59,9 +59,17 @@ def top_genres(request):
     
     sorted_genres = sorted(genre_count.items(), key=lambda item: item[1], reverse=True)[:10]
     genres = {genre: index + 1 for index, (genre, count) in enumerate(sorted_genres)}
-
     return Response(genres)
 
 @api_view(['GET'])
 def recommendations(request):
-    pass
+    access_token = spotify.get_user_tokens(request.session.session_key).access_token
+    headers = {'Authorization' : f'Bearer {access_token}'}
+    params = {'limit': 5, 'time_range': 'short_term'}
+    endpoint = 'https://api.spotify.com/v1/recommendations'
+    
+    # Get recommendations of the tracks
+    response = requests.get(endpoint, headers=headers, params=params)
+    return Response(response.json())
+
+
