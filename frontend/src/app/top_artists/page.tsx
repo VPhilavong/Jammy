@@ -17,7 +17,7 @@ export default function TopArtistsPage() {
   useEffect(() => {
     fetch('http://localhost:8000/top_artists', {
       method: 'GET',
-      credentials: 'include', // include cookies for Django session auth
+      credentials: 'include', // include cookies for Django session authenticatessss
     })
       .then((res) => {
         if (!res.ok) throw new Error(`Status: ${res.status}`);
