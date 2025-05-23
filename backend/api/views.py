@@ -19,7 +19,7 @@ def top_tracks(request):
     # Input params
     access_token = spotify.get_user_tokens(request.session.session_key).access_token
     headers = {'Authorization': f'Bearer {access_token}'}
-    params = {'limit': 5, 'time_range': 'short_term'}
+    params = {'limit': 50, 'time_range': 'short_term'}
     endpoint = 'https://api.spotify.com/v1/me/top/tracks'
     # Get top tracks
     response = requests.get(endpoint, headers=headers, params=params)
@@ -31,7 +31,7 @@ def top_artists(request):
     # Input params
     access_token = spotify.get_user_tokens(request.session.session_key).access_token
     headers = {'Authorization': f'Bearer {access_token}'}
-    params = {'limit': 5, 'time_range': 'short_term'}
+    params = {'limit': 50, 'time_range': 'short_term'}
     endpoint = 'https://api.spotify.com/v1/me/top/artists'
     # Get top artists
     response = requests.get(endpoint, headers=headers, params=params)
