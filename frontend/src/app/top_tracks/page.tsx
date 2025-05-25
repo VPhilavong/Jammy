@@ -65,7 +65,44 @@ export default function TopTracksPage(): JSX.Element {
       }
 
       const data: ApiResponse = await response.json();
-      setTracks(data.items || []);
+      
+      // Enhanced to fetch artist images if not already included
+      const tracksWithArtistDetails = await Promise.all(
+        (data.items || []).map(async (track) => {
+          // Fetch artist details for all artists to get their images
+          const artistsWithImages = await Promise.all(
+            track.artists.map(async (artist) => {
+              // Always try to fetch artist details to get images
+              try {
+                const artistResponse = await fetch(`http://localhost:8000/artist/${encodeURIComponent(artist.name)}`, {
+                  credentials: 'include',
+                });
+                
+                if (artistResponse.ok) {
+                  const artistData = await artistResponse.json();
+                  return {
+                    ...artist,
+                    images: artistData.images || [],
+                    external_urls: artistData.external_urls || artist.external_urls,
+                  };
+                }
+              } catch (err) {
+                console.error(`Failed to fetch details for artist ${artist.name}:`, err);
+              }
+              
+              // Return original artist if fetch fails
+              return artist;
+            })
+          );
+
+          return {
+            ...track,
+            artists: artistsWithImages,
+          };
+        })
+      );
+      
+      setTracks(tracksWithArtistDetails);
       setLoadingState('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
@@ -123,6 +160,37 @@ export default function TopTracksPage(): JSX.Element {
     </div>
   );
 
+  // Enhanced artist image component with better fallback
+  const ArtistAvatar = ({ artist }: { artist: Artist }): JSX.Element => {
+    const artistImage = getArtistImage(artist);
+    
+    return (
+      <div 
+        className="w-10 h-10 rounded-full border-2 border-slate-600 overflow-hidden bg-gradient-to-br from-amber-800 to-red-900 shadow-lg group-hover:scale-110 transition-all duration-300 hover:border-amber-400"
+        title={artist.name}
+      >
+        {artistImage ? (
+          <img
+            src={artistImage}
+            alt={artist.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={(e) => {
+              // Hide broken images and show fallback
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-amber-200 text-xs font-bold">
+              {artist.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const TrackCard = ({ track, index }: { track: Track; index: number }): JSX.Element => (
     <div
       className="group relative bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-3xl p-6 shadow-2xl hover:shadow-3xl transform hover:-translate-y-3 transition-all duration-500 border border-amber-200/10 hover:border-amber-200/30 cursor-pointer overflow-hidden"
@@ -177,41 +245,37 @@ export default function TopTracksPage(): JSX.Element {
           </p>
         </div>
 
-        {/* Artist Images */}
-        <div className="flex items-center space-x-3">
-          <span className="text-amber-200/60 text-xs font-medium uppercase tracking-wider">Artists</span>
-          <div className="flex -space-x-2">
-            {track.artists.slice(0, 3).map((artist, artistIndex) => {
-              const artistImage = getArtistImage(artist);
-              return (
-                <div
-                  key={artistIndex}
-                  className="w-8 h-8 rounded-full border-2 border-slate-800 overflow-hidden bg-gradient-to-br from-amber-800 to-red-900 shadow-lg"
-                  title={artist.name}
-                >
-                  {artistImage ? (
-                    <img
-                      src={artistImage}
-                      alt={artist.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-amber-200/50" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
+        {/* Artist Images - Enhanced section */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <span className="text-amber-200/60 text-xs font-medium uppercase tracking-wider">Artists</span>
+            <div className="flex -space-x-2">
+              {track.artists.slice(0, 4).map((artist, artistIndex) => (
+                <ArtistAvatar key={artistIndex} artist={artist} />
+              ))}
+              {track.artists.length > 4 && (
+                <div className="w-10 h-10 rounded-full border-2 border-slate-600 bg-slate-700 flex items-center justify-center text-xs text-amber-200/70 font-bold hover:border-amber-400 transition-colors">
+                  +{track.artists.length - 4}
                 </div>
-              );
-            })}
-            {track.artists.length > 3 && (
-              <div className="w-8 h-8 rounded-full border-2 border-slate-800 bg-slate-700 flex items-center justify-center text-xs text-amber-200/70 font-bold">
-                +{track.artists.length - 3}
-              </div>
-            )}
+              )}
+            </div>
           </div>
+          
+          {/* Spotify link */}
+          {track.external_urls?.spotify && (
+            <a
+              href={track.external_urls.spotify}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-green-400 hover:text-green-300 transition-colors"
+              title="Open in Spotify"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.84-.179-.84-.66 0-.479.179-.66.479-.66 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02v-.12zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15.12 10.561 18.72 12.84c.361.181.481.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
+              </svg>
+            </a>
+          )}
         </div>
 
         {/* Track Stats */}

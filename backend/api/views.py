@@ -72,4 +72,23 @@ def recommendations(request):
     response = requests.get(endpoint, headers=headers, params=params)
     return Response(response.json())
 
+# Example backend endpoint (Python/Flask)
+@api_view(['GET'])
+def get_artist(request, artist_name):
+    # Input params
+    access_token = spotify.get_user_tokens(request.session.session_key).access_token
+    headers = {'Authorization': f'Bearer {access_token}'}
+    params = {'q': f'artist:{artist_name}', 'type': 'artist', 'limit': 1}
+    endpoint = 'https://api.spotify.com/v1/search'
+    
+    # Search for the artist
+    response = requests.get(endpoint, headers=headers, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if data['artists']['items']:
+            return Response(data['artists']['items'][0])
+    
+    return Response({"error": "Artist not found"}, status=404)
+
 

@@ -8,4 +8,5 @@ urlpatterns = [
     path('top_tracks/', views.top_tracks),
     path('top_artists/', views.top_artists),
     path('top_genres/', views.top_genres),
+    path('artist/<str:artist_name>/', views.get_artist, name='get_artist'),
 ]
