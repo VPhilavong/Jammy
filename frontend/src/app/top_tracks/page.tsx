@@ -152,7 +152,7 @@ export default function TopTracksPage(): JSX.Element {
           </div>
           <div>
             <h3 className="text-tan text-xl font-semibold mb-2">Something went wrong</h3>
-            <p className="text-slate-gray text-sm mb-6">{message}</p>
+            <p className="text-tan text-sm mb-6">{message}</p>
             <button
               onClick={onRetry}
               className="px-6 py-3 bg-tan hover:bg-tan/90 text-space-cadet font-medium rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
@@ -249,7 +249,7 @@ export default function TopTracksPage(): JSX.Element {
           <h3 className="text-tan font-semibold text-base leading-tight mb-1 line-clamp-2 group-hover:text-tan/90 transition-colors">
             {track.name}
           </h3>
-          <p className="text-slate-gray text-sm font-normal">
+          <p className="text-tan text-sm font-normal">
             {track.artists.map((artist) => artist.name).join(", ")}
           </p>
         </div>
@@ -257,7 +257,7 @@ export default function TopTracksPage(): JSX.Element {
         {/* Artist Avatars */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-coffee text-xs font-medium uppercase tracking-wide">Artists</span>
+            <span className="text-tan text-xs font-medium uppercase tracking-wide">Artists</span>
             <div className="flex -space-x-1">
               {track.artists.slice(0, 3).map((artist, artistIndex) => (
                 <ArtistAvatar key={artistIndex} artist={artist} />
@@ -278,7 +278,7 @@ export default function TopTracksPage(): JSX.Element {
                 href={track.external_urls.spotify}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-gray hover:text-green-400 transition-colors p-1"
+                className="text-tan hover:text-green-400 transition-colors p-1"
                 title="Open in Spotify"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -292,10 +292,10 @@ export default function TopTracksPage(): JSX.Element {
                 hoveredTrack === track.id ? "opacity-100" : "opacity-0"
               }`}
             >
-              <Button variant="ghost" size="icon" className="text-slate-gray hover:text-tan w-8 h-8">
+              <Button variant="ghost" size="icon" className="text-tan hover:text-tan w-8 h-8">
                 <Heart className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-slate-gray hover:text-tan w-8 h-8">
+              <Button variant="ghost" size="icon" className="text-tan hover:text-tan w-8 h-8">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </div>
@@ -305,7 +305,7 @@ export default function TopTracksPage(): JSX.Element {
         {/* Track Stats */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-coffee">
+            <div className="flex justify-between text-xs text-tan">
               <span>Popularity</span>
               <span>{track.popularity}%</span>
             </div>
@@ -317,7 +317,7 @@ export default function TopTracksPage(): JSX.Element {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs text-coffee mb-1">Duration</p>
+            <p className="text-xs text-tan mb-1">Duration</p>
             <p className="text-tan font-mono text-sm font-medium">{formatDuration(track.duration_ms)}</p>
           </div>
         </div>
@@ -334,7 +334,7 @@ export default function TopTracksPage(): JSX.Element {
               </span>
             ))}
             {track.genres.length > 2 && (
-              <span className="px-2 py-1 bg-slate-gray/40 text-tan/70 rounded-full text-xs backdrop-blur-sm">
+              <span className="px-2 py-1 bg-slate-gray/40 text-tan rounded-full text-xs backdrop-blur-sm">
                 +{track.genres.length - 2}
               </span>
             )}
@@ -381,7 +381,7 @@ export default function TopTracksPage(): JSX.Element {
       {/* Content */}
       <div className="relative max-w-7xl mx-auto px-8 py-12">
         <div className="text-center mb-8">
-          <p className="text-slate-gray text-lg font-medium">
+          <p className="text-tan text-lg font-medium">
             Showing your top <span className="font-bold text-tan">{tracks.length}</span> tracks
           </p>
         </div>
@@ -401,9 +401,9 @@ export default function TopTracksPage(): JSX.Element {
               <svg className="w-6 h-6 text-tan" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.84-.179-.84-.66 0-.479.179-.66.479-.66 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02v-.12zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15.12 10.561 18.72 12.84c.361.181.481.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
               </svg>
-              <span className="text-slate-gray font-medium">Powered by Spotify</span>
+              <span className="text-tan font-medium">Powered by Spotify</span>
             </div>
-            <p className="text-coffee text-sm">Your music, beautifully displayed</p>
+            <p className="text-tan text-sm">Your music, beautifully displayed</p>
           </div>
         </div>
       </footer>
