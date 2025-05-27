@@ -34,44 +34,18 @@ import {
 const navigationItems = [
   {
     title: "Home",
-    url: "/",
+    url: "/dashboard",
     icon: Home,
   },
   {
-    title: "Search",
-    url: "/search",
-    icon: Search,
-  },
-  {
-    title: "Explore",
-    url: "/explore",
-    icon: Compass,
-  },
-  {
     title: "Top Tracks",
-    url: "/tracks",
+    url: "/dashboard/top_tracks",
     icon: Music,
   },
-  {
-    title: "Trending",
-    url: "/trending",
-    icon: TrendingUp,
-  },
-  {
-    title: "Messages",
-    url: "/messages",
-    icon: MessageCircle,
-    badge: "3",
-  },
-  {
-    title: "Notifications",
-    url: "/notifications",
-    icon: Bell,
-  },
-  {
-    title: "Create",
-    url: "/create",
-    icon: PlusSquare,
+    {
+    title: "Top Artists",
+    url: "/dashboard/top_artists",
+    icon: Music,
   },
   {
     title: "Liked Songs",
@@ -108,7 +82,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <div className="w-8 h-8 bg-gradient-to-r from-tan to-coffee rounded-lg flex items-center justify-center">
             <Music className="w-5 h-5 text-space-cadet" />
           </div>
-          <h1 className="text-tan text-xl font-bold tracking-tight">MusicApp</h1>
+          <h1 className="text-tan text-xl font-bold tracking-tight">Jammy</h1>
         </div>
       </SidebarHeader>
 
@@ -133,20 +107,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         }
                       `}
                     >
-                      <Link href={item.url} className="flex items-center space-x-4">
-                        <item.icon
-                          className={`w-6 h-6 ${isActive ? "text-tan" : "text-tan/70 group-hover:text-tan"}`}
-                        />
-                        <span
-                          className={`font-medium ${isActive ? "text-tan font-semibold" : "text-tan/70 group-hover:text-tan"}`}
-                        >
-                          {item.title}
-                        </span>
-                        {item.badge && (
-                          <span className="ml-auto bg-caput-mortuum text-tan text-xs font-bold px-2 py-1 rounded-full">
-                            {item.badge}
+                      <Link href={item.url}>
+                        <div className="flex items-center space-x-4">
+                          <item.icon
+                            className={`w-6 h-6 ${isActive ? "text-tan" : "text-tan/70 group-hover:text-tan"}`}
+                          />
+                          <span
+                            className={`font-medium ${isActive ? "text-tan font-semibold" : "text-tan/70 group-hover:text-tan"}`}
+                          >
+                            {item.title}
                           </span>
-                        )}
+                        </div>
                         {isActive && (
                           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-tan rounded-r-full" />
                         )}
@@ -177,13 +148,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     }
                   `}
                 >
-                  <Link href={item.url} className="flex items-center space-x-4">
-                    <item.icon className={`w-6 h-6 ${isActive ? "text-tan" : "text-tan/70 group-hover:text-tan"}`} />
-                    <span
-                      className={`font-medium ${isActive ? "text-tan font-semibold" : "text-tan/70 group-hover:text-tan"}`}
-                    >
-                      {item.title}
-                    </span>
+                  <Link href={item.url}>
+                    <div className="flex items-center space-x-4">
+                      <item.icon className={`w-6 h-6 ${isActive ? "text-tan" : "text-tan/70 group-hover:text-tan"}`} />
+                      <span
+                        className={`font-medium ${isActive ? "text-tan font-semibold" : "text-tan/70 group-hover:text-tan"}`}
+                      >
+                        {item.title}
+                      </span>
+                    </div>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
