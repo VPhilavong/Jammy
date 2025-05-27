@@ -91,7 +91,7 @@ def callback(request):
         request.session['spotify_token'] = response_data.get('access_token')
         
         # Redirect to frontend or success page
-        return redirect('http://localhost:3000/top_artists')
+        return redirect('http://localhost:3000/dashboard')
     
     # Handle error case
     return redirect('/#' + urlencode({'error': 'invalid_token'}))

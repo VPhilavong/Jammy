@@ -363,21 +363,6 @@ export default function TopTracksPage(): JSX.Element {
         />
       </div>
 
-      {/* Header */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-caput-mortuum/80 to-coffee/80 backdrop-blur-sm" />
-        <div className="relative px-8 py-16 text-center">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-tan to-tan/80 mb-4 tracking-tight">
-              Your Top Tracks
-            </h1>
-            <p className="text-tan/80 text-xl md:text-2xl font-normal max-w-2xl mx-auto leading-relaxed">
-              Discover your most played songs and explore your musical journey through personalized insights
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Content */}
       <div className="relative max-w-7xl mx-auto px-8 py-12">
         <div className="text-center mb-8">

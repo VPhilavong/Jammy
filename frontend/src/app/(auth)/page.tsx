@@ -17,7 +17,7 @@ export default function LoginPage() {
             <div className="h-8 w-8">
               <Music className="h-8 w-8 text-purple-600" />
             </div>
-            <span className="text-xl font-semibold">MusicApp</span>
+            <span className="text-xl font-semibold">Jammy</span>
           </div>
 
           <div className="text-center mb-8">
