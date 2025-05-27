@@ -5,14 +5,8 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import {
   Home,
-  Search,
-  Compass,
-  MessageCircle,
-  Bell,
-  PlusSquare,
   User,
   Music,
-  TrendingUp,
   Heart,
   Settings,
   Menu,
