@@ -34,7 +34,7 @@ interface ApiResponse {
 
 type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 
-export default function TopTracksPage(): JSX.Element {
+export default function TopTracksPage(): React.JSX.Element {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
@@ -118,7 +118,7 @@ export default function TopTracksPage(): JSX.Element {
     fetchTopTracks();
   }, [fetchTopTracks]);
 
-  const LoadingSpinner = (): JSX.Element => (
+  const LoadingSpinner = (): React.JSX.Element => (
     <div className="min-h-screen bg-space-cadet flex items-center justify-center">
       <div className="text-center space-y-6">
         <div className="relative">
@@ -141,7 +141,7 @@ export default function TopTracksPage(): JSX.Element {
     </div>
   );
 
-  const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void }): JSX.Element => (
+  const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void }): React.JSX.Element => (
     <div className="min-h-screen bg-space-cadet flex items-center justify-center p-8">
       <div className="bg-gradient-to-r from-caput-mortuum/90 to-coffee/90 backdrop-blur-sm border border-caput-mortuum/50 rounded-2xl p-8 text-center shadow-2xl max-w-md w-full">
         <div className="space-y-4">
@@ -165,7 +165,7 @@ export default function TopTracksPage(): JSX.Element {
     </div>
   );
 
-  const ArtistAvatar = ({ artist }: { artist: Artist }): JSX.Element => {
+  const ArtistAvatar = ({ artist }: { artist: Artist }): React.JSX.Element => {
     const artistImage = getArtistImage(artist);
     
     return (
@@ -196,7 +196,7 @@ export default function TopTracksPage(): JSX.Element {
     );
   };
 
-  const TrackCard = ({ track, index }: { track: Track; index: number }): JSX.Element => (
+  const TrackCard = ({ track, index }: { track: Track; index: number }): React.JSX.Element => (
     <div
       className="group relative bg-slate-gray/20 hover:bg-slate-gray/30 backdrop-blur-sm rounded-lg p-4 transition-all duration-300 cursor-pointer border border-slate-gray/20 hover:border-tan/30"
       onMouseEnter={() => setHoveredTrack(track.id)}
