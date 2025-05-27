@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Play, Heart, MoreHorizontal, Users } from "lucide-react"
+import Image from "next/image"
 import type { JSX } from "react/jsx-runtime" // Import JSX to fix the undeclared variable error
 
 interface Artist {
@@ -27,7 +28,6 @@ export default function TopArtistsPage(): JSX.Element {
   const [artists, setArtists] = useState<Artist[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loadingState, setLoadingState] = useState<LoadingState>("idle")
-  const [selectedArtist, setSelectedArtist] = useState<Artist | null>(null)
   const [hoveredArtist, setHoveredArtist] = useState<string | null>(null)
 
   const formatFollowers = useCallback((count: number): string => {
@@ -131,7 +131,6 @@ export default function TopArtistsPage(): JSX.Element {
       className="group relative bg-slate-gray/20 hover:bg-slate-gray/30 backdrop-blur-sm rounded-lg p-4 transition-all duration-300 cursor-pointer border border-slate-gray/20 hover:border-tan/30"
       onMouseEnter={() => setHoveredArtist(artist.name)}
       onMouseLeave={() => setHoveredArtist(null)}
-      onClick={() => setSelectedArtist(artist)}
     >
       {/* Rank Badge */}
       <div className="absolute -top-2 -right-2 z-10">
@@ -144,11 +143,12 @@ export default function TopArtistsPage(): JSX.Element {
       <div className="relative mb-4">
         <div className="aspect-square rounded-full overflow-hidden bg-slate-gray/30 shadow-lg ring-1 ring-slate-gray/30">
           {getArtistImage(artist) ? (
-            <img
+            <Image
               src={getArtistImage(artist)! || "/placeholder.svg"}
               alt={`${artist.name} profile`}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
+              width={200}
+              height={200}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-coffee to-caput-mortuum flex items-center justify-center">

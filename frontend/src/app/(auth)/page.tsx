@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Music, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -71,7 +72,7 @@ export default function LoginPage() {
                 onClick={handleSpotifyLogin}
                 className="w-full h-14 bg-[#1DB954] hover:bg-[#1ed760] text-white font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
               >
-                <img src="/spotify_logo.png" alt="Spotify Logo" className="mr-3 h-6 w-6" />
+                <Image src="/spotify_logo.png" alt="Spotify Logo" width={24} height={24} className="mr-3" />
                 Continue with Spotify
               </Button>
 

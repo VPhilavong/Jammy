@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Play, Heart, MoreHorizontal } from "lucide-react";
+import Image from "next/image";
 
 interface Artist {
   name: string;
@@ -37,7 +38,6 @@ export default function TopTracksPage(): JSX.Element {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
-  const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [hoveredTrack, setHoveredTrack] = useState<string | null>(null);
 
   const formatDuration = useCallback((ms: number): string => {
@@ -174,11 +174,12 @@ export default function TopTracksPage(): JSX.Element {
         title={artist.name}
       >
         {artistImage ? (
-          <img
+          <Image
             src={artistImage}
             alt={artist.name}
             className="w-full h-full object-cover"
-            loading="lazy"
+            width={32}
+            height={32}
             onError={(e) => {
               // Hide broken images and show fallback
               e.currentTarget.style.display = 'none';
@@ -200,7 +201,6 @@ export default function TopTracksPage(): JSX.Element {
       className="group relative bg-slate-gray/20 hover:bg-slate-gray/30 backdrop-blur-sm rounded-lg p-4 transition-all duration-300 cursor-pointer border border-slate-gray/20 hover:border-tan/30"
       onMouseEnter={() => setHoveredTrack(track.id)}
       onMouseLeave={() => setHoveredTrack(null)}
-      onClick={() => setSelectedTrack(track)}
     >
       {/* Rank Badge */}
       <div className="absolute -top-2 -right-2 z-10">
@@ -213,11 +213,12 @@ export default function TopTracksPage(): JSX.Element {
       <div className="relative mb-4">
         <div className="aspect-square rounded-md overflow-hidden bg-slate-gray/30 shadow-lg ring-1 ring-slate-gray/30">
           {track.album.images?.[0]?.url ? (
-            <img
+            <Image
               src={track.album.images[0].url}
               alt={`${track.name} album cover`}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
+              width={300}
+              height={300}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-coffee to-caput-mortuum flex items-center justify-center">
