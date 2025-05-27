@@ -15,12 +15,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   adminer:
     image: adminer
     restart: always
     ports:
       - "8080:8080"
-    
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   backend:
     build:
       context: ./backend
@@ -41,7 +44,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   frontend:
     build:
       context: ./frontend
@@ -55,6 +59,8 @@ services:
       - NODE_ENV=development
     depends_on:
       - backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   postgres_data:
