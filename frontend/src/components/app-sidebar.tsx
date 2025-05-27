@@ -82,7 +82,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <div className="w-8 h-8 bg-gradient-to-r from-tan to-coffee rounded-lg flex items-center justify-center">
             <Music className="w-5 h-5 text-space-cadet" />
           </div>
-          <h1 className="text-tan text-xl font-bold tracking-tight">MusicApp</h1>
+          <h1 className="text-tan text-xl font-bold tracking-tight">Jammy</h1>
         </div>
       </SidebarHeader>
 

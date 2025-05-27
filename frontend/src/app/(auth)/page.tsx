@@ -106,18 +106,6 @@ export default function LoginPage() {
                 </Button>
               </Link>
             </div>
-
-            {/* Footer text */}
-            <p className="mt-8 text-center text-sm" style={{ color: "#617891" }}>
-              By continuing, you agree to our{" "}
-              <Link href="#" className="underline hover:no-underline" style={{ color: "#D5B893" }}>
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href="#" className="underline hover:no-underline" style={{ color: "#D5B893" }}>
-                Privacy Policy
-              </Link>
-            </p>
           </div>
         </div>
 
@@ -161,7 +149,7 @@ export default function LoginPage() {
             ></div>
           </div>
 
-          {/* Video background (if you want to keep it) */}
+          {/* Video background */}
           <video
             className="absolute inset-0 w-full h-full object-cover opacity-10 rounded-3xl"
             autoPlay
