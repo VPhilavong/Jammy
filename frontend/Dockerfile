@@ -1,16 +1,21 @@
 FROM node:20-slim
 
+# Install system dependencies required by SWC and node-gyp
+RUN apt-get update && \
+    apt-get install -y curl python3 make g++ && \
+    npm install -g pnpm && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Install dependencies
-COPY package*.json ./
-RUN npm install
+# Install dependencies using pnpm
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
 
-# Copy project files
+# Copy all remaining project files
 COPY . .
 
-# Expose port 3000
+# Expose Next.js dev port
 EXPOSE 3000
 
-# Start development server
-CMD ["npm", "run", "dev", "--", "--port=3000"] 
+CMD ["pnpm", "dev", "--port", "3000"]
