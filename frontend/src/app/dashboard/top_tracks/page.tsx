@@ -139,24 +139,70 @@ export default function TopTracksPage(): React.JSX.Element {
     fetchTopTracks();
   }, [fetchTopTracks]);
 
-  const LoadingSpinner = (): React.JSX.Element => (
-    <div className="min-h-screen bg-space-cadet flex items-center justify-center">
-      <div className="text-center space-y-6">
-        <div className="relative">
-          <div className="animate-spin rounded-full h-20 w-20 border-4 border-tan border-t-transparent mx-auto shadow-2xl"></div>
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-tan/20 to-coffee/20 blur-xl"></div>
-        </div>
+  const SkeletonCard = (): React.JSX.Element => (
+    <div className="bg-slate-gray/20 backdrop-blur-sm rounded-lg p-4 border border-slate-gray/20">
+      <div className="relative mb-4">
+        <div className="aspect-square rounded-md bg-slate-gray/30 animate-pulse" />
+      </div>
+      <div className="space-y-3">
         <div className="space-y-2">
-          <p className="text-tan text-xl font-semibold tracking-wide">Loading your top tracks</p>
-          <div className="flex justify-center space-x-1">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="w-2 h-2 bg-tan rounded-full animate-pulse"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              />
-            ))}
+          <div className="h-4 bg-slate-gray/30 rounded animate-pulse" />
+          <div className="h-3 bg-slate-gray/20 rounded animate-pulse w-3/4" />
+        </div>
+        
+        {/* Artist avatars skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="h-3 w-12 bg-slate-gray/20 rounded animate-pulse" />
+            <div className="flex -space-x-1">
+              <div className="w-8 h-8 rounded-full bg-slate-gray/30 animate-pulse" />
+              <div className="w-8 h-8 rounded-full bg-slate-gray/30 animate-pulse" />
+            </div>
           </div>
+        </div>
+        
+        {/* Stats skeleton */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <div className="h-2 bg-slate-gray/20 rounded animate-pulse" />
+            <div className="w-full bg-slate-gray/30 rounded-full h-1" />
+          </div>
+          <div className="text-right space-y-1">
+            <div className="h-2 bg-slate-gray/20 rounded animate-pulse w-12 ml-auto" />
+            <div className="h-3 bg-slate-gray/30 rounded animate-pulse w-16 ml-auto" />
+          </div>
+        </div>
+        
+        {/* Genres skeleton */}
+        <div className="flex flex-wrap gap-1 pt-1">
+          <div className="h-6 w-12 bg-slate-gray/20 rounded-full animate-pulse" />
+          <div className="h-6 w-16 bg-slate-gray/20 rounded-full animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const LoadingGrid = (): React.JSX.Element => (
+    <div className="min-h-screen bg-space-cadet text-tan">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-tan/5 rounded-full blur-3xl animate-pulse" />
+        <div
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-caput-mortuum/5 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s" }}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="relative max-w-7xl mx-auto px-8 py-12">
+        <div className="text-center mb-8">
+          <div className="h-6 bg-slate-gray/30 rounded animate-pulse w-64 mx-auto" />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+          {Array.from({ length: 20 }).map((_, index) => (
+            <SkeletonCard key={index} />
+          ))}
         </div>
       </div>
     </div>
@@ -381,7 +427,7 @@ export default function TopTracksPage(): React.JSX.Element {
   );
 
   if (loadingState === 'loading') {
-    return <LoadingSpinner />;
+    return <LoadingGrid />;
   }
 
   if (loadingState === 'error') {
