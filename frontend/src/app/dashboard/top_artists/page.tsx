@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Play, Heart, MoreHorizontal, Users } from "lucide-react"
 import Image from "next/image"
-import type { JSX } from "react/jsx-runtime" // Import JSX to fix the undeclared variable error
+import type { JSX } from "react/jsx-runtime"
 
 interface Artist {
   name: string
@@ -24,11 +24,15 @@ interface ApiResponse {
 
 type LoadingState = "idle" | "loading" | "success" | "error"
 
+const CACHE_KEY = 'topArtists';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export default function TopArtistsPage(): JSX.Element {
   const [artists, setArtists] = useState<Artist[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loadingState, setLoadingState] = useState<LoadingState>("idle")
   const [hoveredArtist, setHoveredArtist] = useState<string | null>(null)
+  const [cachedData, setCachedData] = useState<Artist[]>([])
 
   const formatFollowers = useCallback((count: number): string => {
     if (count >= 1000000) {
@@ -43,9 +47,40 @@ export default function TopArtistsPage(): JSX.Element {
     return artist.images?.[0]?.url || null
   }, [])
 
+  const getCachedData = useCallback(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsedData = JSON.parse(cached);
+        const isExpired = Date.now() - parsedData.timestamp > CACHE_DURATION;
+        
+        if (!isExpired) {
+          return parsedData.data;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to get cached data:', error);
+    }
+    return null;
+  }, []);
+
+  const setCacheData = useCallback((data: Artist[]) => {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      console.error('Failed to cache data:', error);
+    }
+  }, []);
+
   const fetchTopArtists = useCallback(async (): Promise<void> => {
-    setLoadingState("loading")
-    setError(null)
+    // Only show loading if we don't have cached data
+    if (cachedData.length === 0) {
+      setLoadingState("loading");
+    }
+    setError(null);
 
     try {
       const response = await fetch("http://localhost:8000/top_artists", {
@@ -54,25 +89,40 @@ export default function TopArtistsPage(): JSX.Element {
         headers: {
           "Content-Type": "application/json",
         },
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch artists: ${response.status} ${response.statusText}`)
+        throw new Error(`Failed to fetch artists: ${response.status} ${response.statusText}`);
       }
 
-      const data: ApiResponse = await response.json()
-      setArtists(data.items || [])
-      setLoadingState("success")
+      const data: ApiResponse = await response.json();
+      
+      // Update artists and cache
+      setArtists(data.items || []);
+      setCacheData(data.items || []);
+      setLoadingState("success");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred"
-      setError(errorMessage)
-      setLoadingState("error")
+      // Only show error if we don't have cached data
+      if (cachedData.length === 0) {
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+        setError(errorMessage);
+        setLoadingState("error");
+      }
     }
-  }, [])
+  }, [cachedData.length, setCacheData]);
 
   useEffect(() => {
-    fetchTopArtists()
-  }, [fetchTopArtists])
+    // Try to load from cache first
+    const cached = getCachedData();
+    if (cached) {
+      setArtists(cached);
+      setCachedData(cached);
+      setLoadingState('success');
+    }
+    
+    // Always fetch fresh data in background
+    fetchTopArtists();
+  }, [getCachedData, fetchTopArtists])
 
   const SkeletonCard = (): JSX.Element => (
     <div className="bg-slate-gray/20 backdrop-blur-sm rounded-lg p-4 border border-slate-gray/20">
@@ -287,11 +337,11 @@ export default function TopArtistsPage(): JSX.Element {
     </div>
   )
 
-  if (loadingState === "loading") {
+  if (loadingState === "loading" && cachedData.length === 0) {
     return <LoadingGrid />
   }
 
-  if (loadingState === "error") {
+  if (loadingState === "error" && cachedData.length === 0) {
     return <ErrorState message={error || "Unknown error"} onRetry={fetchTopArtists} />
   }
 
