@@ -9,6 +9,8 @@ import requests
 from django.core.cache import cache
 from django.conf import settings
 import hashlib
+from datetime import timedelta
+from django.utils import timezone
 
 @api_view(['GET'])
 def getData(request):
@@ -18,8 +20,11 @@ def getData(request):
 
 @api_view(['GET'])
 def top_tracks(request):
-    access_token = spotify.get_user_tokens(request.session.session_key).access_token
-    headers = {'Authorization': f'Bearer {access_token}'}
+    user_token = spotify.get_valid_token(request.session.session_key)
+    if not user_token:
+        return Response({"error": "No valid token found"}, status=401)
+    
+    headers = {'Authorization': f'Bearer {user_token.access_token}'}
     params = {'limit': 50, 'time_range': 'short_term'}
     endpoint = 'https://api.spotify.com/v1/me/top/tracks'
     
@@ -33,8 +38,11 @@ def top_tracks(request):
 
 @api_view(['GET'])
 def top_artists(request):
-    access_token = spotify.get_user_tokens(request.session.session_key).access_token
-    headers = {'Authorization': f'Bearer {access_token}'}
+    user_token = spotify.get_valid_token(request.session.session_key)
+    if not user_token:
+        return Response({"error": "No valid token found"}, status=401)
+    
+    headers = {'Authorization': f'Bearer {user_token.access_token}'}
     params = {'limit': 50, 'time_range': 'short_term'}
     endpoint = 'https://api.spotify.com/v1/me/top/artists'
     
@@ -48,8 +56,11 @@ def top_artists(request):
 
 @api_view(['GET'])
 def top_genres(request):
-    access_token = spotify.get_user_tokens(request.session.session_key).access_token
-    headers = {'Authorization': f'Bearer {access_token}'}
+    user_token = spotify.get_valid_token(request.session.session_key)
+    if not user_token:
+        return Response({"error": "No valid token found"}, status=401)
+    
+    headers = {'Authorization': f'Bearer {user_token.access_token}'}
     params = {'limit': 50, 'time_range': 'short_term'}
     endpoint = 'https://api.spotify.com/v1/me/top/artists'
     
@@ -71,8 +82,11 @@ def top_genres(request):
 
 @api_view(['GET'])
 def get_artist(request, artist_name):
-    access_token = spotify.get_user_tokens(request.session.session_key).access_token
-    headers = {'Authorization': f'Bearer {access_token}'}
+    user_token = spotify.get_valid_token(request.session.session_key)
+    if not user_token:
+        return Response({"error": "No valid token found"}, status=401)
+    
+    headers = {'Authorization': f'Bearer {user_token.access_token}'}
     params = {'q': f'artist:{artist_name}', 'type': 'artist', 'limit': 1}
     endpoint = 'https://api.spotify.com/v1/search'
     
@@ -106,12 +120,11 @@ def get_artists_bulk_cached(request):
         if not session_key:
             return Response({"error": "No session found"}, status=401)
         
-        user_token = spotify.get_user_tokens(session_key)
+        user_token = spotify.get_valid_token(session_key)
         if not user_token:
-            return Response({"error": "No user token found"}, status=401)
+            return Response({"error": "No valid token found"}, status=401)
         
-        access_token = user_token.access_token
-        headers = {'Authorization': f'Bearer {access_token}'}
+        headers = {'Authorization': f'Bearer {user_token.access_token}'}
         
         unique_artists = list(dict.fromkeys(artist_names))
         artists_data = {}
