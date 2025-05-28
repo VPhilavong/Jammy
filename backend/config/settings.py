@@ -151,7 +151,7 @@ CACHES = {
 }
 
 # Cache timeout for artist data (1 hour)
-ARTIST_CACHE_TIMEOUT = 3600
+ARTIST_CACHE_TIMEOUT = 86400
 
 # Optional: Use Redis for sessions as well (better performance)
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'

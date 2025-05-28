@@ -5,7 +5,7 @@ from .serializer import ItemSerializer
 from spotify.views import *
 import spotify.util as spotify
 import json
-import requests  
+import requests
 from django.core.cache import cache
 from django.conf import settings
 import hashlib
@@ -13,87 +13,79 @@ import hashlib
 @api_view(['GET'])
 def getData(request):
     items = SpotifyToken.objects.all()
-    serializer = ItemSerializer(items, many = True)
+    serializer = ItemSerializer(items, many=True)
     return Response(serializer.data)
 
-
-# Get top tracks
 @api_view(['GET'])
 def top_tracks(request):
-    # Input params
     access_token = spotify.get_user_tokens(request.session.session_key).access_token
     headers = {'Authorization': f'Bearer {access_token}'}
     params = {'limit': 50, 'time_range': 'short_term'}
     endpoint = 'https://api.spotify.com/v1/me/top/tracks'
-    # Get top tracks
+    
     response = requests.get(endpoint, headers=headers, params=params)
-    return Response(response.json())
+    
+    if response.status_code == 200:
+        data = response.json()
+        return Response(data)
+    else:
+        return Response({"error": "Failed to fetch top tracks"}, status=response.status_code)
 
-# Get top artist
 @api_view(['GET'])
 def top_artists(request):
-    # Input params
     access_token = spotify.get_user_tokens(request.session.session_key).access_token
     headers = {'Authorization': f'Bearer {access_token}'}
     params = {'limit': 50, 'time_range': 'short_term'}
     endpoint = 'https://api.spotify.com/v1/me/top/artists'
-    # Get top artists
-    response = requests.get(endpoint, headers=headers, params=params)
-    return Response(response.json())
     
+    response = requests.get(endpoint, headers=headers, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        return Response(data)
+    else:
+        return Response({"error": "Failed to fetch top artists"}, status=response.status_code)
+
 @api_view(['GET'])
 def top_genres(request):
-    # Input parameters
     access_token = spotify.get_user_tokens(request.session.session_key).access_token
-    timerange = request.GET.get('time_range', 'short_term')
     headers = {'Authorization': f'Bearer {access_token}'}
-    params = {'limit': 50, 'time_range': timerange}
-    # Get top artists
-    response = requests.get('https://api.spotify.com/v1/me/top/artists', headers=headers, params=params)
-   
-    genre_count = {}
-    data = response.json()
-
-    for artist in data['items']:
-            for genre in artist['genres']:
-                if genre in genre_count:
-                    genre_count[genre] += 1
-                else:
-                    genre_count[genre] = 1
+    params = {'limit': 50, 'time_range': 'short_term'}
+    endpoint = 'https://api.spotify.com/v1/me/top/artists'
     
-    sorted_genres = sorted(genre_count.items(), key=lambda item: item[1], reverse=True)[:10]
-    genres = {genre: index + 1 for index, (genre, count) in enumerate(sorted_genres)}
-    return Response(genres)
-
-@api_view(['GET'])
-def recommendations(request):
-    access_token = spotify.get_user_tokens(request.session.session_key).access_token
-    headers = {'Authorization' : f'Bearer {access_token}'}
-    params = {'limit': 5, 'time_range': 'short_term'}
-    endpoint = 'https://api.spotify.com/v1/recommendations'
-    
-    # Get recommendations of the tracks
     response = requests.get(endpoint, headers=headers, params=params)
-    return Response(response.json())
+    
+    if response.status_code == 200:
+        data = response.json()
+        # Extract genres from artists
+        genres = {}
+        for artist in data.get('items', []):
+            for genre in artist.get('genres', []):
+                genres[genre] = genres.get(genre, 0) + 1
+        
+        # Sort by popularity and return top genres
+        sorted_genres = sorted(genres.items(), key=lambda x: x[1], reverse=True)
+        return Response({"genres": sorted_genres[:20]})
+    else:
+        return Response({"error": "Failed to fetch top genres"}, status=response.status_code)
 
-# Example backend endpoint (Python/Flask)
 @api_view(['GET'])
 def get_artist(request, artist_name):
-    # Input params
     access_token = spotify.get_user_tokens(request.session.session_key).access_token
     headers = {'Authorization': f'Bearer {access_token}'}
     params = {'q': f'artist:{artist_name}', 'type': 'artist', 'limit': 1}
     endpoint = 'https://api.spotify.com/v1/search'
     
-    # Search for the artist
     response = requests.get(endpoint, headers=headers, params=params)
     
     if response.status_code == 200:
         data = response.json()
         if data['artists']['items']:
             return Response(data['artists']['items'][0])
-    
-    return Response({"error": "Artist not found"}, status=404)
+        else:
+            return Response({"error": "Artist not found"}, status=404)
+    else:
+        return Response({"error": "Failed to fetch artist"}, status=response.status_code)
 
 @api_view(['POST'])
 def get_artists_bulk_cached(request):

@@ -39,6 +39,8 @@ export default function TopTracksPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [hoveredTrack, setHoveredTrack] = useState<string | null>(null);
+  const [artistsLoading, setArtistsLoading] = useState<boolean>(false);
+  const [artistsData, setArtistsData] = useState<Record<string, any>>({});
 
   const formatDuration = useCallback((ms: number): string => {
     const minutes = Math.floor(ms / 60000);
@@ -47,7 +49,56 @@ export default function TopTracksPage(): React.JSX.Element {
   }, []);
 
   const getArtistImage = useCallback((artist: Artist): string | null => {
-    return artist.images?.[0]?.url || null;
+    // First check if we have fetched artist data
+    const fetchedArtist = artistsData[artist.name];
+    if (fetchedArtist && fetchedArtist.images && fetchedArtist.images.length > 0) {
+      return fetchedArtist.images[0].url;
+    }
+    
+    // Fallback to track artist images if available
+    if (artist.images && artist.images.length > 0) {
+      return artist.images[0].url;
+    }
+    
+    return null;
+  }, [artistsData]);
+
+  const fetchArtistDetails = useCallback(async (tracks: Track[]): Promise<void> => {
+    setArtistsLoading(true);
+    
+    try {
+      // Collect unique artist names from all tracks
+      const uniqueArtistNames = new Set<string>();
+      tracks.forEach(track => {
+        track.artists.forEach(artist => {
+          uniqueArtistNames.add(artist.name);
+        });
+      });
+
+      if (uniqueArtistNames.size > 0) {
+        const artistsResponse = await fetch('http://localhost:8000/artists/bulk-cached/', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            artist_names: Array.from(uniqueArtistNames)
+          }),
+        });
+
+        if (artistsResponse.ok) {
+          const fetchedArtistsData = await artistsResponse.json();
+          setArtistsData(fetchedArtistsData);
+        } else {
+          console.error('Failed to fetch artists:', await artistsResponse.text());
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch artist details:', err);
+    } finally {
+      setArtistsLoading(false);
+    }
   }, []);
 
   const fetchTopTracks = useCallback(async (): Promise<void> => {
@@ -69,50 +120,20 @@ export default function TopTracksPage(): React.JSX.Element {
 
       const data: ApiResponse = await response.json();
       
-      // Enhanced to fetch artist images if not already included
-      const tracksWithArtistDetails = await Promise.all(
-        (data.items || []).map(async (track) => {
-          // Fetch artist details for all artists to get their images
-          const artistsWithImages = await Promise.all(
-            track.artists.map(async (artist) => {
-              // Always try to fetch artist details to get images
-              try {
-                const artistResponse = await fetch(`http://localhost:8000/artist/${encodeURIComponent(artist.name)}`, {
-                  credentials: 'include',
-                });
-                
-                if (artistResponse.ok) {
-                  const artistData = await artistResponse.json();
-                  return {
-                    ...artist,
-                    images: artistData.images || [],
-                    external_urls: artistData.external_urls || artist.external_urls,
-                  };
-                }
-              } catch (err) {
-                console.error(`Failed to fetch details for artist ${artist.name}:`, err);
-              }
-              
-              // Return original artist if fetch fails
-              return artist;
-            })
-          );
-
-          return {
-            ...track,
-            artists: artistsWithImages,
-          };
-        })
-      );
-      
-      setTracks(tracksWithArtistDetails);
+      // Show tracks immediately without artist details
+      setTracks(data.items || []);
       setLoadingState('success');
+      
+      // Then fetch artist details in the background
+      if (data.items && data.items.length > 0) {
+        fetchArtistDetails(data.items);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(errorMessage);
       setLoadingState('error');
     }
-  }, []);
+  }, [fetchArtistDetails]);
 
   useEffect(() => {
     fetchTopTracks();
@@ -165,23 +186,32 @@ export default function TopTracksPage(): React.JSX.Element {
     </div>
   );
 
+  const SkeletonAvatar = (): React.JSX.Element => (
+    <div className="w-8 h-8 rounded-full bg-slate-gray/30 animate-pulse flex-shrink-0" />
+  );
+
   const ArtistAvatar = ({ artist }: { artist: Artist }): React.JSX.Element => {
     const artistImage = getArtistImage(artist);
+    const hasArtistData = artistsData[artist.name];
+    
+    // Show skeleton while artist data is loading
+    if (artistsLoading && !hasArtistData) {
+      return <SkeletonAvatar />;
+    }
     
     return (
       <div
-        className="w-8 h-8 rounded-full border border-slate-gray/50 overflow-hidden bg-slate-gray/30 flex-shrink-0"
+        className="w-8 h-8 rounded-full border border-slate-gray/50 overflow-hidden bg-slate-gray/30 flex-shrink-0 transition-all duration-300"
         title={artist.name}
       >
         {artistImage ? (
           <Image
             src={artistImage}
             alt={artist.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-opacity duration-300"
             width={32}
             height={32}
             onError={(e) => {
-              // Hide broken images and show fallback
               e.currentTarget.style.display = 'none';
             }}
           />
@@ -273,7 +303,6 @@ export default function TopTracksPage(): React.JSX.Element {
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-1">
-            {/* Spotify Link */}
             {track.external_urls?.spotify && (
               <a
                 href={track.external_urls.spotify}
@@ -369,6 +398,11 @@ export default function TopTracksPage(): React.JSX.Element {
         <div className="text-center mb-8">
           <p className="text-tan text-lg font-medium">
             Showing your top <span className="font-bold text-tan">{tracks.length}</span> tracks
+            {artistsLoading && (
+              <span className="ml-2 text-sm text-tan/70 animate-pulse">
+                • Loading artist details...
+              </span>
+            )}
           </p>
         </div>
 
