@@ -34,6 +34,9 @@ interface ApiResponse {
 
 type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 
+const CACHE_KEY = 'topTracks';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export default function TopTracksPage(): React.JSX.Element {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +44,7 @@ export default function TopTracksPage(): React.JSX.Element {
   const [hoveredTrack, setHoveredTrack] = useState<string | null>(null);
   const [artistsLoading, setArtistsLoading] = useState<boolean>(false);
   const [artistsData, setArtistsData] = useState<Record<string, any>>({});
+  const [cachedData, setCachedData] = useState<Track[]>([]);
 
   const formatDuration = useCallback((ms: number): string => {
     const minutes = Math.floor(ms / 60000);
@@ -101,8 +105,39 @@ export default function TopTracksPage(): React.JSX.Element {
     }
   }, []);
 
+  const getCachedData = useCallback(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsedData = JSON.parse(cached);
+        const isExpired = Date.now() - parsedData.timestamp > CACHE_DURATION;
+        
+        if (!isExpired) {
+          return parsedData.data;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to get cached data:', error);
+    }
+    return null;
+  }, []);
+
+  const setCacheData = useCallback((data: Track[]) => {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      console.error('Failed to cache data:', error);
+    }
+  }, []);
+
   const fetchTopTracks = useCallback(async (): Promise<void> => {
-    setLoadingState('loading');
+    // Only show loading if we don't have cached data
+    if (cachedData.length === 0) {
+      setLoadingState('loading');
+    }
     setError(null);
 
     try {
@@ -120,24 +155,42 @@ export default function TopTracksPage(): React.JSX.Element {
 
       const data: ApiResponse = await response.json();
       
-      // Show tracks immediately without artist details
+      // Update tracks and cache
       setTracks(data.items || []);
+      setCacheData(data.items || []);
       setLoadingState('success');
       
-      // Then fetch artist details in the background
+      // Fetch artist details
       if (data.items && data.items.length > 0) {
         fetchArtistDetails(data.items);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(errorMessage);
-      setLoadingState('error');
+      // Only show error if we don't have cached data
+      if (cachedData.length === 0) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        setError(errorMessage);
+        setLoadingState('error');
+      }
     }
-  }, [fetchArtistDetails]);
+  }, [cachedData.length, fetchArtistDetails, setCacheData]);
 
   useEffect(() => {
+    // Try to load from cache first
+    const cached = getCachedData();
+    if (cached) {
+      setTracks(cached);
+      setCachedData(cached);
+      setLoadingState('success');
+      
+      // Fetch artist details for cached data
+      if (cached.length > 0) {
+        fetchArtistDetails(cached);
+      }
+    }
+    
+    // Always fetch fresh data in background
     fetchTopTracks();
-  }, [fetchTopTracks]);
+  }, [getCachedData, fetchTopTracks, fetchArtistDetails]);
 
   const SkeletonCard = (): React.JSX.Element => (
     <div className="bg-slate-gray/20 backdrop-blur-sm rounded-lg p-4 border border-slate-gray/20">
@@ -450,11 +503,6 @@ export default function TopTracksPage(): React.JSX.Element {
         <div className="text-center mb-8">
           <p className="text-tan text-lg font-medium">
             Showing your top <span className="font-bold text-tan">{tracks.length}</span> tracks
-            {artistsLoading && (
-              <span className="ml-2 text-sm text-tan/70 animate-pulse">
-                • Loading artist details...
-              </span>
-            )}
           </p>
         </div>
 
