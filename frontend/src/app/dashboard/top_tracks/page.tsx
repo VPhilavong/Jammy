@@ -39,6 +39,8 @@ export default function TopTracksPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [hoveredTrack, setHoveredTrack] = useState<string | null>(null);
+  const [artistsLoading, setArtistsLoading] = useState<boolean>(false);
+  const [artistsData, setArtistsData] = useState<Record<string, any>>({});
 
   const formatDuration = useCallback((ms: number): string => {
     const minutes = Math.floor(ms / 60000);
@@ -47,7 +49,56 @@ export default function TopTracksPage(): React.JSX.Element {
   }, []);
 
   const getArtistImage = useCallback((artist: Artist): string | null => {
-    return artist.images?.[0]?.url || null;
+    // First check if we have fetched artist data
+    const fetchedArtist = artistsData[artist.name];
+    if (fetchedArtist && fetchedArtist.images && fetchedArtist.images.length > 0) {
+      return fetchedArtist.images[0].url;
+    }
+    
+    // Fallback to track artist images if available
+    if (artist.images && artist.images.length > 0) {
+      return artist.images[0].url;
+    }
+    
+    return null;
+  }, [artistsData]);
+
+  const fetchArtistDetails = useCallback(async (tracks: Track[]): Promise<void> => {
+    setArtistsLoading(true);
+    
+    try {
+      // Collect unique artist names from all tracks
+      const uniqueArtistNames = new Set<string>();
+      tracks.forEach(track => {
+        track.artists.forEach(artist => {
+          uniqueArtistNames.add(artist.name);
+        });
+      });
+
+      if (uniqueArtistNames.size > 0) {
+        const artistsResponse = await fetch('http://localhost:8000/artists/bulk-cached/', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            artist_names: Array.from(uniqueArtistNames)
+          }),
+        });
+
+        if (artistsResponse.ok) {
+          const fetchedArtistsData = await artistsResponse.json();
+          setArtistsData(fetchedArtistsData);
+        } else {
+          console.error('Failed to fetch artists:', await artistsResponse.text());
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch artist details:', err);
+    } finally {
+      setArtistsLoading(false);
+    }
   }, []);
 
   const fetchTopTracks = useCallback(async (): Promise<void> => {
@@ -69,73 +120,89 @@ export default function TopTracksPage(): React.JSX.Element {
 
       const data: ApiResponse = await response.json();
       
-      // Enhanced to fetch artist images if not already included
-      const tracksWithArtistDetails = await Promise.all(
-        (data.items || []).map(async (track) => {
-          // Fetch artist details for all artists to get their images
-          const artistsWithImages = await Promise.all(
-            track.artists.map(async (artist) => {
-              // Always try to fetch artist details to get images
-              try {
-                const artistResponse = await fetch(`http://localhost:8000/artist/${encodeURIComponent(artist.name)}`, {
-                  credentials: 'include',
-                });
-                
-                if (artistResponse.ok) {
-                  const artistData = await artistResponse.json();
-                  return {
-                    ...artist,
-                    images: artistData.images || [],
-                    external_urls: artistData.external_urls || artist.external_urls,
-                  };
-                }
-              } catch (err) {
-                console.error(`Failed to fetch details for artist ${artist.name}:`, err);
-              }
-              
-              // Return original artist if fetch fails
-              return artist;
-            })
-          );
-
-          return {
-            ...track,
-            artists: artistsWithImages,
-          };
-        })
-      );
-      
-      setTracks(tracksWithArtistDetails);
+      // Show tracks immediately without artist details
+      setTracks(data.items || []);
       setLoadingState('success');
+      
+      // Then fetch artist details in the background
+      if (data.items && data.items.length > 0) {
+        fetchArtistDetails(data.items);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(errorMessage);
       setLoadingState('error');
     }
-  }, []);
+  }, [fetchArtistDetails]);
 
   useEffect(() => {
     fetchTopTracks();
   }, [fetchTopTracks]);
 
-  const LoadingSpinner = (): React.JSX.Element => (
-    <div className="min-h-screen bg-space-cadet flex items-center justify-center">
-      <div className="text-center space-y-6">
-        <div className="relative">
-          <div className="animate-spin rounded-full h-20 w-20 border-4 border-tan border-t-transparent mx-auto shadow-2xl"></div>
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-tan/20 to-coffee/20 blur-xl"></div>
-        </div>
+  const SkeletonCard = (): React.JSX.Element => (
+    <div className="bg-slate-gray/20 backdrop-blur-sm rounded-lg p-4 border border-slate-gray/20">
+      <div className="relative mb-4">
+        <div className="aspect-square rounded-md bg-slate-gray/30 animate-pulse" />
+      </div>
+      <div className="space-y-3">
         <div className="space-y-2">
-          <p className="text-tan text-xl font-semibold tracking-wide">Loading your top tracks</p>
-          <div className="flex justify-center space-x-1">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="w-2 h-2 bg-tan rounded-full animate-pulse"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              />
-            ))}
+          <div className="h-4 bg-slate-gray/30 rounded animate-pulse" />
+          <div className="h-3 bg-slate-gray/20 rounded animate-pulse w-3/4" />
+        </div>
+        
+        {/* Artist avatars skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="h-3 w-12 bg-slate-gray/20 rounded animate-pulse" />
+            <div className="flex -space-x-1">
+              <div className="w-8 h-8 rounded-full bg-slate-gray/30 animate-pulse" />
+              <div className="w-8 h-8 rounded-full bg-slate-gray/30 animate-pulse" />
+            </div>
           </div>
+        </div>
+        
+        {/* Stats skeleton */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <div className="h-2 bg-slate-gray/20 rounded animate-pulse" />
+            <div className="w-full bg-slate-gray/30 rounded-full h-1" />
+          </div>
+          <div className="text-right space-y-1">
+            <div className="h-2 bg-slate-gray/20 rounded animate-pulse w-12 ml-auto" />
+            <div className="h-3 bg-slate-gray/30 rounded animate-pulse w-16 ml-auto" />
+          </div>
+        </div>
+        
+        {/* Genres skeleton */}
+        <div className="flex flex-wrap gap-1 pt-1">
+          <div className="h-6 w-12 bg-slate-gray/20 rounded-full animate-pulse" />
+          <div className="h-6 w-16 bg-slate-gray/20 rounded-full animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const LoadingGrid = (): React.JSX.Element => (
+    <div className="min-h-screen bg-space-cadet text-tan">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-tan/5 rounded-full blur-3xl animate-pulse" />
+        <div
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-caput-mortuum/5 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s" }}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="relative max-w-7xl mx-auto px-8 py-12">
+        <div className="text-center mb-8">
+          <div className="h-6 bg-slate-gray/30 rounded animate-pulse w-64 mx-auto" />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+          {Array.from({ length: 20 }).map((_, index) => (
+            <SkeletonCard key={index} />
+          ))}
         </div>
       </div>
     </div>
@@ -165,23 +232,35 @@ export default function TopTracksPage(): React.JSX.Element {
     </div>
   );
 
+  const SkeletonAvatar = (): React.JSX.Element => (
+    <div className="w-8 h-8 rounded-full bg-slate-gray/30 animate-pulse flex-shrink-0" />
+  );
+
   const ArtistAvatar = ({ artist }: { artist: Artist }): React.JSX.Element => {
     const artistImage = getArtistImage(artist);
+    const hasArtistData = artistsData[artist.name];
+    
+    // Show skeleton while artist data is loading
+    if (artistsLoading && !hasArtistData) {
+      return <SkeletonAvatar />;
+    }
     
     return (
       <div
-        className="w-8 h-8 rounded-full border border-slate-gray/50 overflow-hidden bg-slate-gray/30 flex-shrink-0"
+        className="w-8 h-8 rounded-full border border-slate-gray/50 overflow-hidden bg-slate-gray/30 flex-shrink-0 transition-all duration-300"
         title={artist.name}
       >
         {artistImage ? (
           <Image
             src={artistImage}
             alt={artist.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-opacity duration-300"
             width={32}
             height={32}
+            loading="eager"
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R7XQAT3Bwt+X1Kmi9DowBwkOtGjTK6ioJ7lpj2sA9JLTFSGJNUFdyJTEj+uXfQP/9k="
             onError={(e) => {
-              // Hide broken images and show fallback
               e.currentTarget.style.display = 'none';
             }}
           />
@@ -219,6 +298,9 @@ export default function TopTracksPage(): React.JSX.Element {
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               width={300}
               height={300}
+              loading="eager"
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R7XQAT3Bwt+X1Kmi9DowBwkOtGjTK6ioJ7lpj2sA9JLTFSGJNUFdyJTEj+uXfQP/9k="
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-coffee to-caput-mortuum flex items-center justify-center">
@@ -273,7 +355,6 @@ export default function TopTracksPage(): React.JSX.Element {
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-1">
-            {/* Spotify Link */}
             {track.external_urls?.spotify && (
               <a
                 href={track.external_urls.spotify}
@@ -346,7 +427,7 @@ export default function TopTracksPage(): React.JSX.Element {
   );
 
   if (loadingState === 'loading') {
-    return <LoadingSpinner />;
+    return <LoadingGrid />;
   }
 
   if (loadingState === 'error') {
@@ -369,6 +450,11 @@ export default function TopTracksPage(): React.JSX.Element {
         <div className="text-center mb-8">
           <p className="text-tan text-lg font-medium">
             Showing your top <span className="font-bold text-tan">{tracks.length}</span> tracks
+            {artistsLoading && (
+              <span className="ml-2 text-sm text-tan/70 animate-pulse">
+                • Loading artist details...
+              </span>
+            )}
           </p>
         </div>
 
