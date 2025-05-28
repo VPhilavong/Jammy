@@ -38,19 +38,24 @@ A comprehensive web application that visualizes your Spotify listening habits, d
 
 ### Prerequisites
 
-- **Docker & Docker Compose** (recommended)
-- **Node.js 20+** (for local development)
+- **Docker & Docker Compose** 
 - **Python 3.11+** (for local development)
 - **Spotify Developer Account** (required)
 
-### 1. Spotify App Setup
+### 1. Clone Repository
+
+``` bash
+git clone https://github.com/VPhilavong/Jammy.git
+```
+
+### 2. Spotify App Setup
 
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 2. Create a new app
 3. Add redirect URI: `http://localhost:8000/callback/`
 4. Note your `Client ID` and `Client Secret`
 
-### 2. Environment Configuration
+### 3. Environment Configuration
 
 Create a `.env` file in the root directory:
 
@@ -66,10 +71,9 @@ DB_USER=jammy_user
 DB_PASSWORD=your_secure_password_here
 ```
 
-### 3. Docker Setup (Recommended)
+### 4. Docker Setup
 
 ```bash
-cd Jammy
 
 # Build and start all services
 docker-compose up --build
@@ -79,33 +83,6 @@ docker-compose up --build
 # Backend API: http://localhost:8000
 # Database Admin: http://localhost:8080
 # Database: localhost:4545
-```
-
-### 4. Local Development Setup
-
-#### Backend Setup
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-#### Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
 ```
 
 ## 📁 Project Structure
@@ -258,10 +235,6 @@ We welcome contributions! Please follow these steps:
 - Write descriptive commit messages
 - Add tests for new features
 - Update documentation as needed
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👤 Author
 
