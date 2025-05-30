@@ -1,0 +1,37 @@
+# Model configuration
+model:
+  name: "distilbert-base-uncased"
+  num_emotions: 8
+  max_length: 512
+  dropout_rate: 0.3
+
+# Emotion labels
+emotions:
+  - "joy"
+  - "sadness" 
+  - "anger"
+  - "fear"
+  - "love"
+  - "nostalgia"
+  - "hope"
+  - "melancholy"
+
+# Training parameters
+training:
+  batch_size: 16
+  learning_rate: 2e-5
+  num_epochs: 10
+  warmup_steps: 500
+  weight_decay: 0.01
+  
+# Data paths
+data:
+  raw_path: "ml_models/data/raw/"
+  processed_path: "ml_models/data/processed/"
+  labeled_path: "ml_models/data/labeled/"
+  
+# Model saving
+checkpoint:
+  save_path: "ml_models/checkpoints/"
+  save_every: 1000
+  keep_best: 3
