@@ -10,4 +10,9 @@ urlpatterns = [
     path('top_genres/', views.top_genres),
     path('artist/<str:artist_name>/', views.get_artist, name='get_artist'),
     path('artists/bulk-cached/', views.get_artists_bulk_cached, name='get_artists_bulk_cached'),
+    path('analyze-mood/<str:track_id>/', views.analyze_track_mood, name='analyze_track_mood'),
+    path('test-genius/', views.test_genius_token, name='test_genius_token'),
+    path('analyze-lyrics-emotions/', views.analyze_lyrics_emotions, name='analyze_lyrics_emotions'),
+    path('enhanced-track-mood/<str:track_id>/', views.enhanced_track_mood, name='enhanced_track_mood'),
+    path('test-ml-status/', views.test_ml_status, name='test_ml_status'),
 ]
