@@ -17,6 +17,21 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import os
 from bs4 import BeautifulSoup
 
+try:
+    from ml_models.emotion_classifier.inference import EmotionPredictor
+    from spotify.models import LyricAnalysis, EmotionFeedback
+    ML_AVAILABLE = True
+except ImportError as e:
+    print(f"ML models not available: {e}")
+    ML_AVAILABLE = False
+
+# Initialize emotion predictor if available
+if ML_AVAILABLE:
+    MODEL_PATH = os.path.join('ml_models', 'checkpoints', 'best_model.pt')
+    emotion_predictor = EmotionPredictor(MODEL_PATH) if os.path.exists(MODEL_PATH) else EmotionPredictor()
+else:
+    emotion_predictor = None
+
 @api_view(['GET'])
 def getData(request):
     items = SpotifyToken.objects.all()
@@ -520,3 +535,86 @@ def test_genius_token(request):
         
     except Exception as e:
         return Response({"error": str(e)})
+
+@api_view(['POST'])
+def analyze_lyrics_emotions(request):
+    """Analyze emotions using custom ML model"""
+    if not ML_AVAILABLE or not emotion_predictor:
+        return Response({"error": "ML emotion analysis not available"}, status=503)
+    
+    try:
+        lyrics = request.data.get('lyrics')
+        track_id = request.data.get('track_id')
+        
+        if not lyrics:
+            return Response({"error": "Lyrics required"}, status=400)
+        
+        # Get emotion predictions
+        emotions = emotion_predictor.predict(lyrics)
+        confidence = max(emotions.values()) if emotions else 0.0
+        
+        # Save to database if track_id provided
+        analysis_id = None
+        if track_id:
+            analysis, created = LyricAnalysis.objects.get_or_create(
+                track_id=track_id,
+                defaults={
+                    'track_name': request.data.get('track_name', ''),
+                    'artist_name': request.data.get('artist_name', ''),
+                    'lyrics': lyrics,
+                    'emotions': emotions,
+                    'confidence_score': confidence
+                }
+            )
+            analysis_id = analysis.id
+        
+        return Response({
+            "emotions": emotions,
+            "confidence_score": confidence,
+            "analysis_id": analysis_id,
+            "model_loaded": emotion_predictor.is_model_loaded() if emotion_predictor else False
+        })
+        
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+@api_view(['GET'])
+def enhanced_track_mood(request, track_id):
+    """Enhanced mood analysis with both traditional sentiment + ML emotions"""
+    try:
+        # Get your existing mood analysis first
+        existing_response = analyze_track_mood(request, track_id)
+        if existing_response.status_code != 200:
+            return existing_response
+        
+        mood_data = existing_response.data
+        
+        # Add ML emotion analysis if available
+        if ML_AVAILABLE and emotion_predictor and 'genius_data' in mood_data:
+            lyrics = mood_data['genius_data'].get('lyrics', '')
+            
+            if lyrics:
+                try:
+                    ml_emotions = emotion_predictor.predict(lyrics)
+                    mood_data['ml_emotions'] = ml_emotions
+                    mood_data['ml_model_loaded'] = emotion_predictor.is_model_loaded()
+                except Exception as ml_error:
+                    mood_data['ml_emotions'] = {"error": str(ml_error)}
+        
+        return Response(mood_data)
+        
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+@api_view(['GET'])
+def test_ml_status(request):
+    """Test ML emotion classifier status"""
+    return Response({
+        "ml_available": ML_AVAILABLE,
+        "emotion_predictor_exists": emotion_predictor is not None,
+        "model_loaded": emotion_predictor.is_model_loaded() if emotion_predictor else False,
+        "emotion_labels": emotion_predictor.get_emotion_labels() if emotion_predictor else [],
+        "model_path": MODEL_PATH if 'MODEL_PATH' in globals() else "MODEL_PATH not defined",
+        "model_path_exists": os.path.exists(MODEL_PATH) if 'MODEL_PATH' in globals() else False,
+        "import_error": "Check server logs for import errors"
+    })
