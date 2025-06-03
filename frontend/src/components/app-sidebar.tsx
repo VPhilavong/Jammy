@@ -42,9 +42,9 @@ const navigationItems = [
     icon: Music,
   },
   {
-    title: "Liked Songs",
-    url: "/liked",
-    icon: Heart,
+    title: "Top Genres",
+    url: "/dashboard/top_genres",
+    icon: Music,
   },
   {
     title: "Profile",
