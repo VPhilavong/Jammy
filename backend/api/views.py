@@ -24,14 +24,30 @@ def top_tracks(request):
     if not user_token:
         return Response({"error": "No valid token found"}, status=401)
     
+    # Get time_range from query params, default to medium_term
+    time_range = request.GET.get('time_range', 'medium_term')  # short_term, medium_term, long_term
+    limit = int(request.GET.get('limit', 50))
+    
+    # Create cache key
+    cache_key = f"top_tracks:{request.session.session_key}:{time_range}:{limit}"
+    
+    # Check cache first
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        return Response(cached_data)
+    
     headers = {'Authorization': f'Bearer {user_token.access_token}'}
-    params = {'limit': 50, 'time_range': 'short_term'}
+    params = {'limit': limit, 'time_range': time_range}
     endpoint = 'https://api.spotify.com/v1/me/top/tracks'
     
     response = requests.get(endpoint, headers=headers, params=params)
     
     if response.status_code == 200:
         data = response.json()
+        
+        # Cache for 30 minutes
+        cache.set(cache_key, data, getattr(settings, 'TRACKS_CACHE_TIMEOUT', 1800))
+        
         return Response(data)
     else:
         return Response({"error": "Failed to fetch top tracks"}, status=response.status_code)
@@ -42,14 +58,30 @@ def top_artists(request):
     if not user_token:
         return Response({"error": "No valid token found"}, status=401)
     
+    # Get time_range from query params, default to medium_term
+    time_range = request.GET.get('time_range', 'medium_term')  # short_term, medium_term, long_term
+    limit = int(request.GET.get('limit', 50))
+    
+    # Create cache key
+    cache_key = f"top_artists:{request.session.session_key}:{time_range}:{limit}"
+    
+    # Check cache first
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        return Response(cached_data)
+    
     headers = {'Authorization': f'Bearer {user_token.access_token}'}
-    params = {'limit': 50, 'time_range': 'short_term'}
+    params = {'limit': limit, 'time_range': time_range}
     endpoint = 'https://api.spotify.com/v1/me/top/artists'
     
     response = requests.get(endpoint, headers=headers, params=params)
     
     if response.status_code == 200:
         data = response.json()
+        
+        # Cache for 30 minutes
+        cache.set(cache_key, data, getattr(settings, 'ARTISTS_CACHE_TIMEOUT', 1800))
+        
         return Response(data)
     else:
         return Response({"error": "Failed to fetch top artists"}, status=response.status_code)
@@ -60,23 +92,44 @@ def top_genres(request):
     if not user_token:
         return Response({"error": "No valid token found"}, status=401)
     
+    # Get time_range from query params, default to medium_term
+    time_range = request.GET.get('time_range', 'medium_term')  # short_term, medium_term, long_term
+    limit = int(request.GET.get('limit', 50))
+    
+    # Create cache key based on user session and parameters
+    cache_key = f"top_genres:{request.session.session_key}:{time_range}:{limit}"
+    
+    # Check cache first
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        return Response(cached_data)
+    
     headers = {'Authorization': f'Bearer {user_token.access_token}'}
-    params = {'limit': 50, 'time_range': 'short_term'}
+    params = {'limit': limit, 'time_range': time_range}
     endpoint = 'https://api.spotify.com/v1/me/top/artists'
     
     response = requests.get(endpoint, headers=headers, params=params)
     
     if response.status_code == 200:
         data = response.json()
-        # Extract genres from artists
         genres = {}
         for artist in data.get('items', []):
             for genre in artist.get('genres', []):
                 genres[genre] = genres.get(genre, 0) + 1
         
-        # Sort by popularity and return top genres
         sorted_genres = sorted(genres.items(), key=lambda x: x[1], reverse=True)
-        return Response({"genres": sorted_genres[:20]})
+        
+        response_data = {
+            "genres": sorted_genres[:20],
+            "time_range": time_range,
+            "total_unique_genres": len(sorted_genres),
+            "total_artists_analyzed": len(data.get('items', []))
+        }
+        
+        # Cache for 30 minutes (genres don't change that frequently)
+        cache.set(cache_key, response_data, getattr(settings, 'GENRES_CACHE_TIMEOUT', 1800))
+        
+        return Response(response_data)
     else:
         return Response({"error": "Failed to fetch top genres"}, status=response.status_code)
 

@@ -10,4 +10,5 @@ urlpatterns = [
     path('top_genres/', views.top_genres),
     path('artist/<str:artist_name>/', views.get_artist, name='get_artist'),
     path('artists/bulk-cached/', views.get_artists_bulk_cached, name='get_artists_bulk_cached'),
+    path('top_genres', views.top_genres, name='top_genres'),
 ]
