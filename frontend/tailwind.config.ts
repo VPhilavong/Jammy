@@ -53,11 +53,11 @@ const config: Config = {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
   			},
-  			'space-cadet': '#25344F',
-  			'slate-gray': '#617891',
-  			tan: '#D5B893',
-  			coffee: '#6F4D38',
-  			'caput-mortuum': '#632024',
+  			'space-cadet': '#2c2c54',    
+  			'slate-gray': '#7d8597',     
+  			tan: '#d4a574',            
+  			coffee: '#6b5b73',          
+  			'caput-mortuum': '#40394a',  
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',
   				foreground: 'hsl(var(--sidebar-foreground))',

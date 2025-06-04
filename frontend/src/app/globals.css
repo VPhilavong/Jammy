@@ -69,18 +69,6 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-    /* Add the gradient background */
-    background: linear-gradient(135deg, rgb(15 23 42), rgb(88 28 135), rgb(15 23 42));
-    min-height: 100vh;
-  }
-}
-
 /* Custom color classes for your app */
 .bg-space-cadet {
   background-color: #2c2c54;

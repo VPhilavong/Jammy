@@ -120,7 +120,7 @@ def top_genres(request):
         sorted_genres = sorted(genres.items(), key=lambda x: x[1], reverse=True)
         
         response_data = {
-            "genres": sorted_genres[:20],
+            "genres": sorted_genres,  # Return all genres, not just [:20]
             "time_range": time_range,
             "total_unique_genres": len(sorted_genres),
             "total_artists_analyzed": len(data.get('items', []))
