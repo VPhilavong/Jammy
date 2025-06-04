@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'spotify',
     'rest_framework',
     'corsheaders',
+    'api',
+    'music',
 ]
 
 MIDDLEWARE = [
