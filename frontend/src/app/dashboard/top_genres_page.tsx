@@ -27,10 +27,19 @@ interface GenreData {
 }
 
 interface ApiResponse {
-  genres: [string, number][]
-  time_range: string
-  total_unique_genres: number
-  total_artists_analyzed: number
+  spotify_genres: [string, number][]
+  wikipedia_genres: [string, number][]
+  combined_genres: [string, number][]
+  artist_breakdown: any
+  stats: {
+    time_range: string
+    total_artists_analyzed: number
+    spotify_unique_genres: number
+    wikipedia_unique_genres: number
+    combined_unique_genres: number
+    artists_with_wikipedia_genres: number
+  }
+  use_wikipedia: boolean
 }
 
 // Color palette for genres - updated to match earthy theme
@@ -136,8 +145,15 @@ export default function TopGenresPage() {
 
       const data: ApiResponse = await response.json()
 
+      // Use combined_genres from the actual response structure
+      const genresArray = data.combined_genres || data.spotify_genres || []
+
+      if (!Array.isArray(genresArray)) {
+        throw new Error("No valid genres array found in response")
+      }
+
       // Transform API data to component format
-      const transformedData: GenreData[] = data.genres.map(([name, count], index) => ({
+      const transformedData: GenreData[] = genresArray.map(([name, count], index) => ({
         name,
         count,
         category: categorizeGenre(name),

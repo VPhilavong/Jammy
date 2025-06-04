@@ -117,7 +117,7 @@ def top_genres(request):
         data = response.json()
         spotify_genres = {}
         wikipedia_genres = {}
-        combined_genres = {}  # This will ignore case
+        combined_genres = {}
         artist_genre_map = {}
         
         # Initialize Wikipedia service for normalization
@@ -183,25 +183,18 @@ def top_genres(request):
                     print(f"Failed to get Wikipedia genres for {artist_name}: {e}")
                     continue
         
-        # Sort genres by frequency
-        sorted_spotify_genres = sorted(spotify_genres.items(), key=lambda x: x[1], reverse=True)
-        sorted_wikipedia_genres = sorted(wikipedia_genres.items(), key=lambda x: x[1], reverse=True)
+        # Sort genres by frequency - use combined genres for frontend compatibility
         sorted_combined_genres = sorted(combined_genres.items(), key=lambda x: x[1], reverse=True)
         
+        # Format response to match frontend expectations
         response_data = {
-            "spotify_genres": sorted_spotify_genres,
-            "wikipedia_genres": sorted_wikipedia_genres,
-            "combined_genres": sorted_combined_genres,  # Now case-insensitive
-            "artist_breakdown": artist_genre_map,
-            "stats": {
-                "time_range": time_range,
-                "total_artists_analyzed": len(data.get('items', [])),
-                "spotify_unique_genres": len(sorted_spotify_genres),
-                "wikipedia_unique_genres": len(sorted_wikipedia_genres),
-                "combined_unique_genres": len(sorted_combined_genres),
-                "artists_with_wikipedia_genres": len([a for a in artist_genre_map.values() if a['wikipedia_genres']])
-            },
-            "use_wikipedia": use_wikipedia
+            "genres": sorted_combined_genres,  # Frontend expects this key
+            "time_range": time_range,
+            "total_unique_genres": len(sorted_combined_genres),
+            "total_artists_analyzed": len(data.get('items', [])),
+            # Keep additional data for debugging/future use
+            "spotify_genres": sorted(spotify_genres.items(), key=lambda x: x[1], reverse=True),
+            "wikipedia_genres": sorted(wikipedia_genres.items(), key=lambda x: x[1], reverse=True),
         }
         
         # Cache for 30 minutes
