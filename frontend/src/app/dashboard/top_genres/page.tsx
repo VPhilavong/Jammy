@@ -17,6 +17,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Treemap,
 } from "recharts"
 import { Search, Music, Hash, Filter, RefreshCw } from "lucide-react"
 
@@ -69,7 +70,6 @@ export default function TopGenresPage() {
     setError(null)
     
     try {
-      // Adjust the URL to match your Docker setup
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
       const response = await fetch(`${backendUrl}/top_genres/?time_range=${range}&limit=50`, {
         credentials: 'include',
@@ -115,6 +115,32 @@ export default function TopGenresPage() {
   const totalGenres = genreData.length
   const totalCount = genreData.reduce((sum, g) => sum + g.count, 0)
 
+  // Group by category for treemap
+  const categoryData = genreData.reduce((acc, genre) => {
+    const existing = acc.find((item) => item.name === genre.category)
+    if (existing) {
+      existing.value += genre.count
+      existing.children.push({
+        name: genre.name,
+        value: genre.count,
+        color: genre.color,
+      })
+    } else {
+      acc.push({
+        name: genre.category,
+        value: genre.count,
+        children: [
+          {
+            name: genre.name,
+            value: genre.count,
+            color: genre.color,
+          },
+        ],
+      })
+    }
+    return acc
+  }, [] as any[])
+
   const getTimeRangeLabel = (range: string) => {
     switch (range) {
       case 'short_term': return 'Last 4 Weeks'
@@ -126,7 +152,7 @@ export default function TopGenresPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6 flex items-center justify-center">
+      <div className="min-h-screen p-6 flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 text-white animate-spin mx-auto mb-4" />
           <p className="text-white">Loading your top genres...</p>
@@ -137,7 +163,7 @@ export default function TopGenresPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6 flex items-center justify-center">
+      <div className="min-h-screen p-6 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 mb-4">Error: {error}</p>
           <Button onClick={() => fetchGenres(timeRange)} variant="outline">
@@ -149,12 +175,12 @@ export default function TopGenresPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-white">Top Genres</h1>
-          <p className="text-slate-300">Explore your music collection by genre</p>
+          <h1 className="text-5xl font-medium text-white tracking-tight">Top Genres</h1>
+          <p className="text-slate-300 text-lg">Explore your music collection by genre</p>
           
           {/* Time Range Selector */}
           <div className="flex justify-center gap-2">
@@ -240,7 +266,7 @@ export default function TopGenresPage() {
           </div>
         </div>
 
-        {/* Genre Grid */}
+        {/* Main Content */}
         <Tabs defaultValue="grid" className="space-y-6">
           <TabsList className="bg-slate-800/50 border-slate-700">
             <TabsTrigger value="grid" className="data-[state=active]:bg-slate-700">
@@ -249,43 +275,37 @@ export default function TopGenresPage() {
             <TabsTrigger value="charts" className="data-[state=active]:bg-slate-700">
               Charts
             </TabsTrigger>
+            <TabsTrigger value="categories" className="data-[state=active]:bg-slate-700">
+              Categories
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="grid" className="space-y-6">
+            {/* Genre Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filteredGenres.map((genre, index) => (
                 <Card
                   key={genre.name}
-                  className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all cursor-pointer group"
+                  className="border-slate-700 hover:scale-105 transition-all cursor-pointer group"
+                  style={{
+                    backgroundColor: genre.color,
+                    borderColor: `${genre.color}`,
+                  }}
                 >
                   <CardContent className="p-4">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                          #{index + 1}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {genre.category}
-                        </Badge>
+                        <Badge className="bg-white text-black border-white">#{index + 1}</Badge>
+                        <Badge className="bg-white text-black border-white text-xs">{genre.category}</Badge>
                       </div>
 
-                      <div className="text-center space-y-2">
-                        <div
-                          className="w-12 h-12 rounded-full mx-auto flex items-center justify-center text-lg font-bold text-white group-hover:scale-110 transition-transform"
-                          style={{ backgroundColor: genre.color }}
-                        >
-                          {genre.name
-                            .split(" ")
-                            .map((word) => word[0])
-                            .join("")
-                            .slice(0, 2)}
-                        </div>
+                      <div className="text-center">
                         <h3 className="font-semibold text-white text-sm leading-tight">{genre.name}</h3>
                       </div>
 
                       <div className="text-center">
                         <p className="text-2xl font-bold text-white">{genre.count}</p>
-                        <p className="text-slate-400 text-xs">artists</p>
+                        <p className="text-white/80 text-xs">artists</p>
                       </div>
                     </div>
                   </CardContent>
@@ -353,6 +373,54 @@ export default function TopGenresPage() {
                       }}
                     />
                   </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="categories" className="space-y-6">
+            {/* Category Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categories.map((category) => {
+                const categoryGenres = genreData.filter((g) => g.category === category)
+                const categoryTotal = categoryGenres.reduce((sum, g) => sum + g.count, 0)
+
+                return (
+                  <Card key={category} className="bg-slate-800/50 border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="text-white text-lg">{category}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-white">{categoryTotal}</p>
+                        <p className="text-slate-400 text-sm">total artists</p>
+                        <p className="text-slate-400 text-sm">{categoryGenres.length} genres</p>
+                      </div>
+                      <div className="space-y-2">
+                        {categoryGenres.slice(0, 3).map((genre) => (
+                          <div key={genre.name} className="flex justify-between items-center">
+                            <span className="text-sm text-slate-300">{genre.name}</span>
+                            <span className="text-sm text-white font-medium">{genre.count}</span>
+                          </div>
+                        ))}
+                        {categoryGenres.length > 3 && (
+                          <p className="text-xs text-slate-400 text-center">+{categoryGenres.length - 3} more</p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+
+            {/* Treemap */}
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white">Genre Hierarchy</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={400}>
+                  <Treemap data={categoryData} dataKey="value" aspectRatio={4 / 3} stroke="#374151" fill="#8884d8" />
                 </ResponsiveContainer>
               </CardContent>
             </Card>
