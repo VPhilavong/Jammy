@@ -20,4 +20,5 @@ urlpatterns = [
     path('test/music-stats/', views.music_stats, name='music_stats'),
     path('debug/wikipedia/<str:artist_name>/', views.debug_wikipedia, name='debug_wikipedia'),
     path('debug/genre-extraction/<str:artist_name>/', views.debug_genre_extraction, name='debug_genre_extraction'),
+    path('debug/clear-cache/', views.clear_cache, name='clear_cache'),
 ]

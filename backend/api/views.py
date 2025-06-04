@@ -95,11 +95,12 @@ def top_genres(request):
         return Response({"error": "No valid token found"}, status=401)
     
     # Get time_range from query params, default to medium_term
-    time_range = request.GET.get('time_range', 'medium_term')  # short_term, medium_term, long_term
+    time_range = request.GET.get('time_range', 'medium_term')
     limit = int(request.GET.get('limit', 50))
+    use_wikipedia = request.GET.get('use_wikipedia', 'true').lower() == 'true'
     
     # Create cache key based on user session and parameters
-    cache_key = f"top_genres:{request.session.session_key}:{time_range}:{limit}"
+    cache_key = f"top_genres_enhanced:{request.session.session_key}:{time_range}:{limit}:{use_wikipedia}"
     
     # Check cache first
     cached_data = cache.get(cache_key)
@@ -114,21 +115,96 @@ def top_genres(request):
     
     if response.status_code == 200:
         data = response.json()
-        genres = {}
-        for artist in data.get('items', []):
-            for genre in artist.get('genres', []):
-                genres[genre] = genres.get(genre, 0) + 1
+        spotify_genres = {}
+        wikipedia_genres = {}
+        combined_genres = {}  # This will ignore case
+        artist_genre_map = {}
         
-        sorted_genres = sorted(genres.items(), key=lambda x: x[1], reverse=True)
+        # Initialize Wikipedia service for normalization
+        if use_wikipedia:
+            service = WikipediaGenreService()
+        
+        # Process Spotify genres
+        for artist in data.get('items', []):
+            artist_name = artist.get('name')
+            artist_spotify_genres = artist.get('genres', [])
+            
+            # Store artist -> genres mapping (keep original case for display)
+            artist_genre_map[artist_name] = {
+                'spotify_genres': artist_spotify_genres,
+                'wikipedia_genres': [],
+                'spotify_id': artist.get('id'),
+                'popularity': artist.get('popularity', 0)
+            }
+            
+            # Count Spotify genres
+            for genre in artist_spotify_genres:
+                spotify_genres[genre] = spotify_genres.get(genre, 0) + 1
+                # Combine by lowercase key
+                genre_lower = genre.lower()
+                combined_genres[genre_lower] = combined_genres.get(genre_lower, 0) + 1
+        
+        # If Wikipedia integration is enabled, get Wikipedia genres
+        if use_wikipedia:
+            for artist in data.get('items', []):
+                artist_name = artist.get('name')
+                
+                try:
+                    # Check if we have this artist in our database with genres
+                    db_artist = Artist.objects.filter(name__iexact=artist_name).first()
+                    
+                    if db_artist and db_artist.genres.exists():
+                        wiki_genres = [g.name for g in db_artist.genres.all()]
+                    else:
+                        # Try to fetch from Wikipedia
+                        wiki_genres = service.get_artist_genres(artist_name)
+                        
+                        # Store in database if we found genres
+                        if wiki_genres:
+                            if not db_artist:
+                                db_artist = Artist.objects.create(
+                                    name=artist_name,
+                                    spotify_id=artist.get('id')
+                                )
+                            service._store_genres(db_artist, wiki_genres)
+                    
+                    # Update our tracking
+                    if wiki_genres:
+                        artist_genre_map[artist_name]['wikipedia_genres'] = wiki_genres
+                        
+                        # Count Wikipedia genres
+                        for genre in wiki_genres:
+                            wikipedia_genres[genre] = wikipedia_genres.get(genre, 0) + 1
+                            # Combine by lowercase key
+                            genre_lower = genre.lower()
+                            combined_genres[genre_lower] = combined_genres.get(genre_lower, 0) + 1
+                
+                except Exception as e:
+                    print(f"Failed to get Wikipedia genres for {artist_name}: {e}")
+                    continue
+        
+        # Sort genres by frequency
+        sorted_spotify_genres = sorted(spotify_genres.items(), key=lambda x: x[1], reverse=True)
+        sorted_wikipedia_genres = sorted(wikipedia_genres.items(), key=lambda x: x[1], reverse=True)
+        sorted_combined_genres = sorted(combined_genres.items(), key=lambda x: x[1], reverse=True)
         
         response_data = {
-            "genres": sorted_genres,  # Return all genres, not just [:20]
-            "time_range": time_range,
-            "total_unique_genres": len(sorted_genres),
-            "total_artists_analyzed": len(data.get('items', []))
+            "spotify_genres": sorted_spotify_genres,
+            "wikipedia_genres": sorted_wikipedia_genres,
+            "combined_genres": sorted_combined_genres,  # Now case-insensitive
+            "artist_breakdown": artist_genre_map,
+            "stats": {
+                "time_range": time_range,
+                "total_artists_analyzed": len(data.get('items', [])),
+                "spotify_unique_genres": len(sorted_spotify_genres),
+                "wikipedia_unique_genres": len(sorted_wikipedia_genres),
+                "combined_unique_genres": len(sorted_combined_genres),
+                "artists_with_wikipedia_genres": len([a for a in artist_genre_map.values() if a['wikipedia_genres']])
+            },
+            "use_wikipedia": use_wikipedia
         }
         
-        # Cache for 30 minutes (genres don't change that frequently)
+        # Cache for 30 minutes
         cache.set(cache_key, response_data, getattr(settings, 'GENRES_CACHE_TIMEOUT', 1800))
         
         return Response(response_data)
@@ -362,14 +438,13 @@ def music_stats(request):
 
 @api_view(['GET'])
 def debug_wikipedia(request, artist_name):
-    """Debug Wikipedia API for a specific artist"""
-    import re
-    
+    """Debug Wikipedia genre fetching for an artist"""
     try:
         from music.services import WikipediaGenreService
+        
         service = WikipediaGenreService()
         
-        # Test the search
+        # Get search results
         search_results = service._search_artist(artist_name)
         
         debug_info = {
@@ -378,85 +453,40 @@ def debug_wikipedia(request, artist_name):
             'search_results_count': len(search_results)
         }
         
-        # If we have results, get the raw page content to debug
         if search_results:
-            first_result = search_results[0]
-            page_title = first_result['title']
+            # Use the first result
+            selected_page = search_results[0]['title']
+            debug_info['selected_page'] = selected_page
             
-            # Get raw page content
-            params = {
-                'action': 'query',
-                'format': 'json',
-                'prop': 'revisions',
-                'rvprop': 'content',
-                'rvslots': 'main',
-                'titles': page_title
-            }
+            # Extract genres using the actual service method (this will follow redirects and use your filtering)
+            extracted_genres = service._extract_genres_from_page(selected_page)
             
-            response = requests.get('https://en.wikipedia.org/w/api.php', params=params, timeout=10)
+            debug_info.update({
+                'extracted_genres': extracted_genres,
+                'genres_count': len(extracted_genres)
+            })
             
-            if response.status_code == 200:
-                data = response.json()
-                pages = data['query']['pages']
-                page = list(pages.values())[0]
-                
-                if 'revisions' in page:
-                    content = page['revisions'][0]['slots']['main']['*']
-                    
-                    # Look for genre patterns in the content
-                    genre_patterns = [
-                        r'\|\s*genre\s*=\s*([^\n\|]+)',
-                        r'\|\s*genres\s*=\s*([^\n\|]+)',
-                        r'\|\s*style\s*=\s*([^\n\|]+)',
-                        r'\|\s*musical_style\s*=\s*([^\n\|]+)'
-                    ]
-                    
-                    found_matches = []
-                    for pattern in genre_patterns:
-                        matches = re.finditer(pattern, content, re.IGNORECASE)
-                        for match in matches:
-                            found_matches.append({
-                                'pattern': pattern,
-                                'match': match.group(0),
-                                'genre_text': match.group(1)
-                            })
-                    
-                    debug_info.update({
-                        'selected_page': page_title,
-                        'content_length': len(content),
-                        'content_preview': content[:1000] + '...' if len(content) > 1000 else content,
-                        'genre_matches': found_matches,
-                        'infobox_found': '{{Infobox' in content,
-                        'has_genre_field': any(word in content.lower() for word in ['|genre', '|genres', '|style'])
-                    })
-                    
-                    # Try the actual extraction
-                    try:
-                        genres = service._extract_genres_from_page(page_title)
-                        debug_info.update({
-                            'extracted_genres': genres,
-                            'genres_count': len(genres)
-                        })
-                    except Exception as e:
-                        debug_info['extraction_error'] = str(e)
+            # Also test the full get_artist_genres method
+            full_result = service.get_artist_genres(artist_name)
+            debug_info['full_service_result'] = full_result
+            
+        else:
+            debug_info['error'] = 'No search results found'
         
         return Response(debug_info)
         
     except Exception as e:
-        return Response({
-            'error': str(e),
-            'artist': artist_name
-        }, status=500)
+        return Response({'error': str(e)})
 
 @api_view(['GET'])
 def debug_genre_extraction(request, artist_name):
     """Debug just the genre extraction part"""
     try:
         from music.services import WikipediaGenreService
-        import requests
-        import re
         
         service = WikipediaGenreService()
+        
+        # Use the actual service methods instead of manual extraction
         search_results = service._search_artist(artist_name)
         
         if not search_results:
@@ -464,46 +494,30 @@ def debug_genre_extraction(request, artist_name):
         
         page_title = search_results[0]['title']
         
-        # Get page content
-        params = {
-            'action': 'query',
-            'format': 'json',
-            'prop': 'revisions',
-            'rvprop': 'content',
-            'rvslots': 'main',
-            'titles': page_title
-        }
-        
-        response = requests.get('https://en.wikipedia.org/w/api.php', params=params, timeout=10)
-        data = response.json()
-        pages = data['query']['pages']
-        page = list(pages.values())[0]
-        content = page['revisions'][0]['slots']['main']['*']
-        
-        # Extract genre field specifically
-        genre_field_pattern = r'\|\s*genre\s*=\s*(.*?)(?=\n\s*\||\n\}\}|\Z)'
-        match = re.search(genre_field_pattern, content, re.IGNORECASE | re.DOTALL)
-        
+        # Test each step of the process
         debug_info = {
             'page_title': page_title,
-            'genre_field_found': bool(match),
+            'search_results': search_results
         }
         
-        if match:
-            raw_genre_content = match.group(1)
-            debug_info.update({
-                'raw_genre_content': raw_genre_content[:500],  # First 500 chars
-                'raw_genre_length': len(raw_genre_content)
-            })
-            
-            # Test the cleaning process
-            cleaned_genres = service._clean_genre_text(raw_genre_content)
-            debug_info.update({
-                'cleaned_genres': cleaned_genres,
-                'final_result': service.get_artist_genres(artist_name)
-            })
+        # Test the extraction using your updated service
+        extracted_genres = service._extract_genres_from_page(page_title)
+        debug_info['extracted_genres'] = extracted_genres
+        
+        # Test the full pipeline
+        full_result = service.get_artist_genres(artist_name)
+        debug_info['full_service_result'] = full_result
         
         return Response(debug_info)
         
     except Exception as e:
         return Response({'error': str(e)})
+    
+@api_view(['POST'])
+def clear_cache(request):
+    """Clear all cache"""
+    try:
+        cache.clear()
+        return Response({'message': 'Cache cleared successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
