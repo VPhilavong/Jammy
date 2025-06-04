@@ -142,4 +142,8 @@
   .hover\:text-sage:hover {
     color: #606c38;
   }
+  
+  .bg-cream {
+    background-color: #fcfbf5;
+  }
 }
