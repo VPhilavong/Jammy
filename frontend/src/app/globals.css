@@ -6,84 +6,94 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Light mode - earthy theme */
+    --background: 46 97% 97%; /* cream #fefae0 */
+    --foreground: 78 33% 25%; /* sage dark #4a5228 */
+    --card: 46 100% 98%; /* lighter cream */
+    --card-foreground: 78 33% 25%; /* sage dark */
+    --popover: 46 97% 97%; /* cream */
+    --popover-foreground: 78 33% 25%; /* sage dark */
+    --primary: 78 33% 38%; /* sage #606c38 */
+    --primary-foreground: 46 97% 97%; /* cream */
+    --secondary: 33 55% 87%; /* gold #dda15e */
+    --secondary-foreground: 78 33% 25%; /* sage dark */
+    --muted: 46 46% 90%; /* muted cream */
+    --muted-foreground: 78 20% 50%; /* muted sage */
+    --accent: 25 70% 44%; /* copper #bc6c25 */
+    --accent-foreground: 46 97% 97%; /* cream */
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive-foreground: 46 97% 97%;
+    --border: 78 20% 80%; /* light sage */
+    --input: 78 20% 80%; /* light sage */
+    --ring: 78 33% 38%; /* sage */
     --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 33 55% 87%; /* gold */
+    --chart-2: 25 70% 44%; /* copper */
+    --chart-3: 78 33% 38%; /* sage */
+    --chart-4: 46 97% 97%; /* cream */
+    --chart-5: 78 33% 25%; /* dark green */
 
     /* Sidebar variables for earthy cream theme */
-    --sidebar-background: 56 46% 97%; /* Cream background */
-    --sidebar-foreground: 78 33% 25%; /* Sage green text */
-    --sidebar-primary: 78 33% 25%; /* Sage green */
-    --sidebar-primary-foreground: 56 46% 97%; /* Cream text */
-    --sidebar-accent: 78 43% 35%; /* Light sage for hover */
-    --sidebar-accent-foreground: 56 46% 97%; /* Cream text on hover */
-    --sidebar-border: 78 33% 25%; /* Sage border */
-    --sidebar-ring: 42 87% 55%; /* Gold accent */
+    --sidebar-background: 46 97% 97%; /* cream */
+    --sidebar-foreground: 78 33% 25%; /* sage dark */
+    --sidebar-primary: 78 33% 38%; /* sage */
+    --sidebar-primary-foreground: 46 97% 97%; /* cream */
+    --sidebar-accent: 78 43% 50%; /* light sage */
+    --sidebar-accent-foreground: 78 33% 25%; /* sage dark, was cream */
+    --sidebar-border: 78 20% 80%; /* light sage */
+    --sidebar-ring: 33 55% 87%; /* gold */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Dark mode - Deep Ocean/Arctic Night Theme */
+    --background: 220 25% 12%; /* Very dark, slightly desaturated blue */
+    --foreground: 220 15% 92%; /* Very light cool gray for text */
+    --card: 220 25% 16%;       /* Slightly lighter dark desaturated blue */
+    --card-foreground: 220 15% 92%; /* Very light cool gray */
+    --popover: 220 25% 14%;    /* Similar to card or background for popovers */
+    --popover-foreground: 220 15% 92%; /* Very light cool gray */
+    --primary: 200 70% 60%;    /* Bright, clear blue for primary actions */
+    --primary-foreground: 220 25% 12%; /* Dark blue text on primary buttons */
+    --secondary: 210 40% 45%;  /* Muted, slightly desaturated blue */
+    --secondary-foreground: 220 15% 92%; /* Light cool gray for text on secondary */
+    --muted: 220 20% 30%;      /* Darker gray-blue for less important elements */
+    --muted-foreground: 220 15% 65%; /* Lighter gray-blue for muted text */
+    --accent: 170 65% 55%;     /* Teal/Aqua for accents */
+    --accent-foreground: 220 15% 92%; /* Light text on accent color */
+    --destructive: 0 70% 55%;   /* Clear, but not overly vibrant, red */
+    --destructive-foreground: 0 0% 95%; /* Almost white text on destructive actions */
+    --border: 220 25% 22%;     /* Subtle blue-gray border */
+    --input: 220 25% 22%;      /* Same as border for input fields */
+    --ring: 200 70% 60%;       /* Primary blue for focus rings */
 
-    /* Dark mode sidebar variables */
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 240 5.9% 10%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Chart Colors - cool and distinct */
+    --chart-1: 200 70% 60%;    /* Primary blue */
+    --chart-2: 170 65% 55%;    /* Teal/Aqua accent */
+    --chart-3: 210 50% 70%;    /* Lighter, softer blue */
+    --chart-4: 220 15% 80%;    /* Light cool gray, good for neutral series */
+    --chart-5: 185 60% 40%;    /* Deeper teal/cyan */
+
+    /* Dark mode sidebar variables - ocean theme */
+    --sidebar-background: 220 25% 12%; /* dark ocean blue */
+    --sidebar-foreground: 220 15% 92%; /* light cool gray */
+    --sidebar-primary: 200 70% 60%; /* bright blue */
+    --sidebar-primary-foreground: 220 25% 12%; /* dark blue */
+    --sidebar-accent: 170 65% 55%; /* teal accent */
+    --sidebar-accent-foreground: 220 15% 92%; /* light cool gray */
+    --sidebar-border: 220 25% 22%; /* blue-gray border */
+    --sidebar-ring: 200 70% 60%; /* bright blue ring */
   }
 
   body {
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: #fefae0; /* Cream background */
     color: #283618; /* Dark green text */
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .dark body {
+    background-color: #1a1f2e; /* Dark ocean blue background */
+    color: #eaeef5; /* Light cool gray text */
   }
 }
 
@@ -93,16 +103,28 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #f7f3d0; /* Cream dark */
+  background: #fefae0; /* Cream */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #606c38; /* Sage */
+  background: rgba(96, 108, 56, 0.5); /* Sage with opacity */
   border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #dda15e; /* Gold */
+  background: #606c38; /* Sage */
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1a1f2e; /* Dark ocean blue */
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(87, 179, 230, 0.5); /* Ocean blue with opacity */
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #57b3e6; /* Ocean blue */
 }
 
 /* Utility classes for consistent theming */
@@ -144,6 +166,51 @@
   }
   
   .bg-cream {
-    background-color: #fcfbf5;
+    background-color: #fefae0;
+  }
+
+  /* Theme-aware utilities - earthy light / ocean dark */
+  .bg-earthy-gradient {
+    background: linear-gradient(to bottom right, #fefae0, rgba(96, 108, 56, 0.1), rgba(221, 161, 94, 0.2));
+  }
+
+  .dark .bg-earthy-gradient {
+    background: linear-gradient(to bottom right, #1a1f2e, rgba(87, 179, 230, 0.1), rgba(84, 194, 180, 0.2));
+  }
+  
+  .text-earthy-primary {
+    color: #606c38;
+  }
+
+  .dark .text-earthy-primary {
+    color: #57b3e6; /* Ocean blue */
+  }
+  
+  .bg-earthy-card {
+    background-color: rgba(254, 250, 224, 0.8);
+    backdrop-filter: blur(8px);
+  }
+
+  .dark .bg-earthy-card {
+    background-color: rgba(26, 31, 46, 0.8);
+    backdrop-filter: blur(8px);
+  }
+  
+  .border-earthy {
+    border-color: rgba(96, 108, 56, 0.3);
+  }
+
+  .dark .border-earthy {
+    border-color: rgba(87, 179, 230, 0.3);
+  }
+  
+  .hover-earthy:hover {
+    background-color: rgba(96, 108, 56, 0.1);
+    border-color: rgba(96, 108, 56, 0.5);
+  }
+
+  .dark .hover-earthy:hover {
+    background-color: rgba(87, 179, 230, 0.1);
+    border-color: rgba(87, 179, 230, 0.5);
   }
 }

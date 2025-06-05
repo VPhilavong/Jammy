@@ -8,15 +8,15 @@ import random, string
 import os
 from django.utils import timezone
 from datetime import timedelta
+from django.conf import settings
 from .models import SpotifyToken
 
-# Spotify API credentials
-CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
-CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
-REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI')
+# Spotify API credentials - use Django settings instead of os.getenv
+CLIENT_ID = settings.SPOTIFY_CLIENT_ID
+CLIENT_SECRET = settings.SPOTIFY_CLIENT_SECRET
+REDIRECT_URI = settings.SPOTIFY_REDIRECT_URI
 
 # login endpoint
-
 @api_view(['GET'])
 def login(request):
     state = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
@@ -69,6 +69,7 @@ def callback(request):
     }
 
     response = requests.post(auth_options['url'], data=auth_options['data'], headers=auth_options['headers'])
+    
     # Setting Up
     if response.status_code == 200:
         response_data = response.json()
