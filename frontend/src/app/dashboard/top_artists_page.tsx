@@ -304,12 +304,7 @@ export default function TopArtistsPage(): JSX.Element {
               hoveredArtist === artist.name ? "opacity-100" : "opacity-0"
             }`}
           >
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary w-8 h-8">
-              <Heart className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary w-8 h-8">
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
+
           </div>
         </div>
 
