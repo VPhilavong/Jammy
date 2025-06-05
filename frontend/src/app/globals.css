@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -30,15 +32,15 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
-    /* Sidebar variables */
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 240 5.9% 10%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar variables for earthy cream theme */
+    --sidebar-background: 56 46% 97%; /* Cream background */
+    --sidebar-foreground: 78 33% 25%; /* Sage green text */
+    --sidebar-primary: 78 33% 25%; /* Sage green */
+    --sidebar-primary-foreground: 56 46% 97%; /* Cream text */
+    --sidebar-accent: 78 43% 35%; /* Light sage for hover */
+    --sidebar-accent-foreground: 56 46% 97%; /* Cream text on hover */
+    --sidebar-border: 78 33% 25%; /* Sage border */
+    --sidebar-ring: 42 87% 55%; /* Gold accent */
   }
 
   .dark {
@@ -66,75 +68,82 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-  }
-}
 
-@layer base {
-  * {
-    @apply border-border;
+    /* Dark mode sidebar variables */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 240 5.9% 10%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
   body {
-    @apply bg-background text-foreground;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #fefae0; /* Cream background */
+    color: #283618; /* Dark green text */
   }
 }
 
-/* Custom color classes for your app */
-.bg-space-cadet {
-  background-color: #2c2c54;
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 12px;
 }
 
-.bg-caput-mortuum {
-  background-color: #40394a;
+::-webkit-scrollbar-track {
+  background: #f7f3d0; /* Cream dark */
 }
 
-.bg-coffee {
-  background-color: #6b5b73;
+::-webkit-scrollbar-thumb {
+  background: #606c38; /* Sage */
+  border-radius: 6px;
 }
 
-.bg-slate-gray {
-  background-color: #7d8597;
+::-webkit-scrollbar-thumb:hover {
+  background: #dda15e; /* Gold */
 }
 
-.bg-tan {
-  background-color: #d4a574;
-}
+/* Utility classes for consistent theming */
+@layer utilities {
+  .text-sage {
+    color: #606c38;
+  }
 
-.text-space-cadet {
-  color: #2c2c54;
-}
+  .text-dark-green {
+    color: #283618;
+  }
 
-.text-caput-mortuum {
-  color: #40394a;
-}
+  .text-cream {
+    color: #fefae0;
+  }
 
-.text-coffee {
-  color: #6b5b73;
-}
+  .text-gold {
+    color: #dda15e;
+  }
 
-.text-slate-gray {
-  color: #7d8597;
-}
+  .text-copper {
+    color: #bc6c25;
+  }
 
-.text-tan {
-  color: #d4a574;
-}
+  .bg-sage-light {
+    background-color: #7a8a4a;
+  }
 
-.border-space-cadet {
-  border-color: #2c2c54;
-}
+  .hover\:bg-sage-light:hover {
+    background-color: #7a8a4a;
+  }
 
-.border-caput-mortuum {
-  border-color: #40394a;
-}
+  .hover\:text-gold:hover {
+    color: #dda15e;
+  }
 
-.border-coffee {
-  border-color: #6b5b73;
-}
-
-.border-slate-gray {
-  border-color: #7d8597;
-}
-
-.border-tan {
-  border-color: #d4a574;
+  .hover\:text-sage:hover {
+    color: #606c38;
+  }
+  
+  .bg-cream {
+    background-color: #fcfbf5;
+  }
 }
