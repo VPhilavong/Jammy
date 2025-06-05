@@ -63,15 +63,17 @@ def top_artists(request):
     # Get time_range from query params, default to medium_term
     time_range = request.GET.get('time_range', 'medium_term')  # short_term, medium_term, long_term
     limit = int(request.GET.get('limit', 50))
+    use_wikipedia = request.GET.get('use_wikipedia', 'true').lower() == 'true'
     
     # Create cache key
-    cache_key = f"top_artists:{request.session.session_key}:{time_range}:{limit}"
+    cache_key = f"top_artists:{request.session.session_key}:{time_range}:{limit}:{use_wikipedia}"
     
     # Check cache first
     cached_data = cache.get(cache_key)
     if cached_data:
         return Response(cached_data)
     
+    time_range = request.GET.get('time_range', 'medium_term')
     headers = {'Authorization': f'Bearer {user_token.access_token}'}
     params = {'limit': limit, 'time_range': time_range}
     endpoint = 'https://api.spotify.com/v1/me/top/artists'
@@ -80,6 +82,50 @@ def top_artists(request):
     
     if response.status_code == 200:
         data = response.json()
+        
+        # If Wikipedia integration is enabled, enhance artist data with Wikipedia genres
+        if use_wikipedia:
+            service = WikipediaGenreService()
+            
+            for artist in data.get('items', []):
+                artist_name = artist.get('name')
+                spotify_genres = artist.get('genres', [])
+                
+                try:
+                    # Check if we have this artist in our database with genres
+                    db_artist = Artist.objects.filter(name__iexact=artist_name).first()
+                    
+                    if db_artist and db_artist.genres.exists():
+                        wiki_genres = [g.name for g in db_artist.genres.all()]
+                    else:
+                        # Try to fetch from Wikipedia
+                        wiki_genres = service.get_artist_genres(artist_name)
+                        
+                        # Store in database if we found genres
+                        if wiki_genres:
+                            if not db_artist:
+                                db_artist = Artist.objects.create(
+                                    name=artist_name,
+                                    spotify_id=artist.get('id')
+                                )
+                            service._store_genres(db_artist, wiki_genres)
+                    
+                    # Replace or supplement Spotify genres with Wikipedia genres
+                    if wiki_genres:
+                        artist['genres'] = wiki_genres  # Replace with Wikipedia genres
+                        artist['spotify_genres'] = spotify_genres  # Keep original Spotify genres for reference
+                        artist['genre_source'] = 'wikipedia'
+                    else:
+                        artist['genre_source'] = 'spotify'  # Fallback to Spotify genres
+                
+                except Exception as e:
+                    print(f"Failed to get Wikipedia genres for {artist_name}: {e}")
+                    artist['genre_source'] = 'spotify'  # Keep Spotify genres on error
+                    continue
+        else:
+            # Add source indicator for Spotify-only data
+            for artist in data.get('items', []):
+                artist['genre_source'] = 'spotify'
         
         # Cache for 30 minutes
         cache.set(cache_key, data, getattr(settings, 'ARTISTS_CACHE_TIMEOUT', 1800))

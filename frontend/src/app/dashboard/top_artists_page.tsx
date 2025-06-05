@@ -30,6 +30,7 @@ const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 export default function TopArtistsPage(): JSX.Element {
   const [artists, setArtists] = useState<Artist[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [timeRange, setTimeRange] = useState("medium_term")
   const [loadingState, setLoadingState] = useState<LoadingState>("idle")
   const [hoveredArtist, setHoveredArtist] = useState<string | null>(null)
   const [cachedData, setCachedData] = useState<Artist[]>([])
@@ -47,9 +48,9 @@ export default function TopArtistsPage(): JSX.Element {
     return artist.images?.[0]?.url || null
   }, [])
 
-  const getCachedData = useCallback(() => {
+  const getCachedData = useCallback((range: string) => {
     try {
-      const cached = localStorage.getItem(CACHE_KEY)
+      const cached = localStorage.getItem(`${CACHE_KEY}_${range}`)
       if (cached) {
         const parsedData = JSON.parse(cached)
         const isExpired = Date.now() - parsedData.timestamp > CACHE_DURATION
@@ -64,10 +65,10 @@ export default function TopArtistsPage(): JSX.Element {
     return null
   }, [])
 
-  const setCacheData = useCallback((data: Artist[]) => {
+  const setCacheData = useCallback((data: Artist[], range: string) => {
     try {
       localStorage.setItem(
-        CACHE_KEY,
+        `${CACHE_KEY}_${range}`,
         JSON.stringify({
           data,
           timestamp: Date.now(),
@@ -78,7 +79,7 @@ export default function TopArtistsPage(): JSX.Element {
     }
   }, [])
 
-  const fetchTopArtists = useCallback(async (): Promise<void> => {
+  const fetchTopArtists = useCallback(async (range: string): Promise<void> => {
     // Only show loading if we don't have cached data
     if (cachedData.length === 0) {
       setLoadingState("loading")
@@ -86,7 +87,8 @@ export default function TopArtistsPage(): JSX.Element {
     setError(null)
 
     try {
-      const response = await fetch("http://localhost:8000/top_artists", {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+      const response = await fetch(`${backendUrl}/top_artists/?time_range=${range}`, {
         method: "GET",
         credentials: "include",
         headers: {
@@ -102,7 +104,7 @@ export default function TopArtistsPage(): JSX.Element {
 
       // Update artists and cache
       setArtists(data.items || [])
-      setCacheData(data.items || [])
+      setCacheData(data.items || [], range)
       setLoadingState("success")
     } catch (err) {
       // Only show error if we don't have cached data
@@ -116,7 +118,7 @@ export default function TopArtistsPage(): JSX.Element {
 
   useEffect(() => {
     // Try to load from cache first
-    const cached = getCachedData()
+    const cached = getCachedData(timeRange)
     if (cached) {
       setArtists(cached)
       setCachedData(cached)
@@ -124,8 +126,21 @@ export default function TopArtistsPage(): JSX.Element {
     }
 
     // Always fetch fresh data in background
-    fetchTopArtists()
-  }, [getCachedData, fetchTopArtists])
+    fetchTopArtists(timeRange)
+  }, [timeRange, getCachedData, fetchTopArtists])
+
+  const getTimeRangeLabel = (range: string) => {
+    switch (range) {
+      case "short_term":
+        return "Last 4 Weeks"
+      case "medium_term":
+        return "Last 6 Months"
+      case "long_term":
+        return "All Time"
+      default:
+        return "Last 6 Months"
+    }
+  }
 
   const SkeletonCard = (): JSX.Element => (
     <div className="bg-sage/10 backdrop-blur-sm rounded-lg p-4 border border-sage/20">
@@ -329,11 +344,6 @@ export default function TopArtistsPage(): JSX.Element {
                 {genre}
               </span>
             ))}
-            {artist.genres.length > 3 && (
-              <span className="bg-sage-light text-cream px-2 py-1 rounded-full text-xs border border-sage/30">
-                +{artist.genres.length - 3}
-              </span>
-            )}
           </div>
         )}
       </div>
@@ -345,7 +355,7 @@ export default function TopArtistsPage(): JSX.Element {
   }
 
   if (loadingState === "error" && cachedData.length === 0) {
-    return <ErrorState message={error || "Unknown error"} onRetry={fetchTopArtists} />
+    return <ErrorState message={error || "Unknown error"} onRetry={() => fetchTopArtists(timeRange)} />
   }
 
   return (
@@ -361,10 +371,30 @@ export default function TopArtistsPage(): JSX.Element {
 
       {/* Content */}
       <div className="relative max-w-7xl mx-auto px-8 py-12">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 space-y-4">
+          <h1 className="text-5xl font-medium text-dark-green tracking-tight">Top Artists</h1>
           <p className="text-dark-green text-lg font-medium">
             Showing your top <span className="font-bold text-sage">{artists.length}</span> artists
           </p>
+          
+          {/* Time Range Selector */}
+          <div className="flex justify-center gap-2">
+            {["short_term", "medium_term", "long_term"].map((range) => (
+              <Button
+                key={range}
+                variant={timeRange === range ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTimeRange(range)}
+                className={
+                  timeRange === range
+                    ? "bg-sage text-cream hover:bg-sage-dark"
+                    : "text-sage border-sage hover:bg-sage/10"
+                }
+              >
+                {getTimeRangeLabel(range)}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">

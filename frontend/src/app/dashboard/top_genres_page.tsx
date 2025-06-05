@@ -413,7 +413,7 @@ export default function TopGenresPage() {
               <div className="flex gap-2 flex-wrap">
                 <Badge
                   variant={selectedCategory === null ? "default" : "secondary"}
-                  className="cursor-pointer hover:opacity-80 transition-opacity bg-sage text-cream hover:bg-sage-dark"
+                  className="cursor-pointer hover:opacity-80 transition-opacity bg-cream text-sage hover:bg-sage-dark border-sage"
                   onClick={() => setSelectedCategory(null)}
                 >
                   All
