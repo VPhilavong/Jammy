@@ -39,7 +39,7 @@
     --sidebar-primary: 78 33% 38%; /* sage */
     --sidebar-primary-foreground: 46 97% 97%; /* cream */
     --sidebar-accent: 78 43% 50%; /* light sage */
-    --sidebar-accent-foreground: 46 97% 97%; /* cream */
+    --sidebar-accent-foreground: 78 33% 25%; /* sage dark, was cream */
     --sidebar-border: 78 20% 80%; /* light sage */
     --sidebar-ring: 33 55% 87%; /* gold */
   }

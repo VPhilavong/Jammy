@@ -19,6 +19,10 @@ import {
   Cell,
   Treemap,
 } from "recharts"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Avatar } from "@/components/ui/avatar"
+import { X } from "lucide-react"
 
 interface GenreData {
   name: string
@@ -34,6 +38,20 @@ interface ApiResponse {
   total_artists_analyzed: number
   spotify_genres: [string, number][]
   wikipedia_genres: [string, number][]
+  artists_genre_map: {
+    [artistName: string]: {
+      spotify_genres: string[]
+      wikipedia_genres: string[]
+      spotify_id: string
+      popularity: number
+    }
+  }
+}
+
+interface Artist {
+  id: string
+  name: string
+  image_url?: string
 }
 
 // Color palette for genres - updated to match theme
@@ -80,11 +98,15 @@ const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 export default function TopGenresPage() {
   const [genreData, setGenreData] = useState<GenreData[]>([])
+  const [artistsGenreMap, setArtistsGenreMap] = useState<any>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [timeRange, setTimeRange] = useState("medium_term")
   const [cachedData, setCachedData] = useState<GenreData[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null)
+  const [genreArtists, setGenreArtists] = useState<Artist[]>([])
+  const [loadingArtists, setLoadingArtists] = useState(false)
 
   const getCachedData = (range: string) => {
     try {
@@ -139,6 +161,10 @@ export default function TopGenresPage() {
 
       const data: ApiResponse = await response.json()
       console.log(data)
+
+      // Store the artists genre map
+      setArtistsGenreMap(data.artists_genre_map || {})
+
       // Use combined_genres from the actual response structure
       const genresArray = data.genres || []
 
@@ -306,6 +332,43 @@ export default function TopGenresPage() {
     }
   }
 
+  const handleGenreClick = (genreName: string) => {
+    setSelectedGenre(genreName)
+    setLoadingArtists(true)
+
+    try {
+      // Find artists that have this genre (case-insensitive)
+      const matchingArtists: Artist[] = []
+
+      Object.entries(artistsGenreMap).forEach(([artistName, artistData]) => {
+        const { spotify_genres, wikipedia_genres, spotify_id, popularity, image_url } = artistData as any
+
+        // Check both Spotify and Wikipedia genres (case-insensitive)
+        const hasSpotifyGenre = spotify_genres.some((genre: string) =>
+          genre.toLowerCase() === genreName.toLowerCase(),
+        )
+        const hasWikipediaGenre = wikipedia_genres.some((genre: string) =>
+          genre.toLowerCase() === genreName.toLowerCase(),
+        )
+
+        if (hasSpotifyGenre || hasWikipediaGenre) {
+          matchingArtists.push({
+            id: spotify_id,
+            name: artistName,
+            image_url: image_url || "", // Use the image URL from the API response
+          })
+        }
+      })
+
+      setGenreArtists(matchingArtists)
+    } catch (err) {
+      console.error("Error filtering genre artists:", err)
+      setGenreArtists([])
+    } finally {
+      setLoadingArtists(false)
+    }
+  }
+
   if (loading && cachedData.length === 0) {
     return (
       <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
@@ -411,13 +474,22 @@ export default function TopGenresPage() {
           <Tabs defaultValue="grid" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <TabsList className="bg-muted border-border">
-                <TabsTrigger value="grid" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <TabsTrigger
+                  value="grid"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
                   Grid View
                 </TabsTrigger>
-                <TabsTrigger value="charts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <TabsTrigger
+                  value="charts"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
                   Charts
                 </TabsTrigger>
-                <TabsTrigger value="categories" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <TabsTrigger
+                  value="categories"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
                   Categories
                 </TabsTrigger>
               </TabsList>
@@ -447,7 +519,7 @@ export default function TopGenresPage() {
             <TabsContent value="grid" className="space-y-6">
               {/* Genre Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {filteredGenres.slice(0,15).map((genre, index) => (
+                {filteredGenres.slice(0, 15).map((genre, index) => (
                   <Card
                     key={genre.name}
                     className="border-border hover:scale-105 transition-all cursor-pointer group hover:border-primary/40"
@@ -455,12 +527,15 @@ export default function TopGenresPage() {
                       backgroundColor: genre.color,
                       borderColor: `${genre.color}`,
                     }}
+                    onClick={() => handleGenreClick(genre.name)}
                   >
                     <CardContent className="p-4">
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <Badge className="bg-background text-foreground border-background">#{index + 1}</Badge>
-                          <Badge className="bg-background text-foreground border-background text-xs">{genre.category}</Badge>
+                          <Badge className="bg-background text-foreground border-background text-xs">
+                            {genre.category}
+                          </Badge>
                         </div>
 
                         <div className="text-center">
@@ -500,14 +575,29 @@ export default function TopGenresPage() {
                   <ResponsiveContainer width="100%" height={400}>
                     <BarChart data={filteredGenres.slice(0, 15)}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.2} />
-                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" angle={-45} textAnchor="end" height={100} fontSize={12} />
+                      <XAxis
+                        dataKey="name"
+                        stroke="hsl(var(--muted-foreground))"
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                        fontSize={12}
+                      />
                       <YAxis stroke="hsl(var(--muted-foreground))" />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "hsl(var(--background))",
+                          backgroundColor: "hsl(var(--popover))",
                           border: "1px solid hsl(var(--border))",
                           borderRadius: "8px",
-                          color: "hsl(var(--foreground))",
+                          color: "hsl(var(--popover-foreground))",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                        }}
+                        labelStyle={{
+                          color: "hsl(var(--popover-foreground))",
+                          fontWeight: "600",
+                        }}
+                        itemStyle={{
+                          color: "hsl(var(--popover-foreground))",
                         }}
                       />
                       <Bar dataKey="count" fill="hsl(var(--primary))">
@@ -547,15 +637,18 @@ export default function TopGenresPage() {
                       </Pie>
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "hsl(var(--background))",
+                          backgroundColor: "hsl(var(--popover))",
                           border: "1px solid hsl(var(--border))",
                           borderRadius: "8px",
-                          color: "hsl(var(--foreground))",
+                          color: "hsl(var(--popover-foreground))",
                           boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                         }}
                         labelStyle={{
-                          color: "hsl(var(--foreground))",
+                          color: "hsl(var(--popover-foreground))",
                           fontWeight: "600",
+                        }}
+                        itemStyle={{
+                          color: "hsl(var(--popover-foreground))",
                         }}
                       />
                     </PieChart>
@@ -590,7 +683,9 @@ export default function TopGenresPage() {
                             </div>
                           ))}
                           {categoryGenres.length > 3 && (
-                            <p className="text-xs text-muted-foreground text-center">+{categoryGenres.length - 3} more</p>
+                            <p className="text-xs text-muted-foreground text-center">
+                              +{categoryGenres.length - 3} more
+                            </p>
                           )}
                         </div>
                       </CardContent>
@@ -606,7 +701,13 @@ export default function TopGenresPage() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
-                    <Treemap data={categoryData} dataKey="value" aspectRatio={4 / 3} stroke="hsl(var(--border))" fill="hsl(var(--primary))" />
+                    <Treemap
+                      data={categoryData}
+                      dataKey="value"
+                      aspectRatio={4 / 3}
+                      stroke="hsl(var(--border))"
+                      fill="hsl(var(--primary))"
+                    />
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
@@ -614,6 +715,73 @@ export default function TopGenresPage() {
           </Tabs>
         </div>
       </div>
+      {/* Genre Artists Dialog */}
+      <Dialog open={selectedGenre !== null} onOpenChange={(open) => !open && setSelectedGenre(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedGenre}
+            </DialogTitle>
+            <DialogDescription>
+              Artists in this genre from your {getTimeRangeLabel(timeRange)} listening
+            </DialogDescription>
+          </DialogHeader>
+
+          <ScrollArea className="max-h-[60vh]">
+            {loadingArtists ? (
+              <div className="space-y-4 p-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-muted/40 animate-pulse" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-muted/40 rounded animate-pulse" />
+                      <div className="h-3 w-24 bg-muted/30 rounded animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : genreArtists.length > 0 ? (
+              <div className="space-y-4 p-2">
+                {genreArtists.map((artist) => (
+                  <div key={artist.id} className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                      {artist.image_url ? (
+                        <img
+                          src={artist.image_url}
+                          alt={artist.name}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            console.error(`Failed to load image for ${artist.name}: ${artist.image_url}`)
+                            // Show fallback when image fails to load
+                            e.currentTarget.style.display = 'none'
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement
+                            if (fallback) fallback.style.display = 'flex'
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="bg-muted h-full w-full flex items-center justify-center"
+                        style={{ display: artist.image_url ? 'none' : 'flex' }}
+                      >
+                        <span className="text-xs text-muted-foreground font-medium">
+                          {artist.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{artist.name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center">
+                <p className="text-muted-foreground">No artists found for this genre</p>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

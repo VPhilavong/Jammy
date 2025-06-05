@@ -175,12 +175,19 @@ def top_genres(request):
             artist_name = artist.get('name')
             artist_spotify_genres = artist.get('genres', [])
             
+            # Get the largest image URL from Spotify
+            image_url = ""
+            images = artist.get('images', [])
+            if images:
+                image_url = images[0].get('url', '')  # First image is usually the largest
+            
             # Store artist -> genres mapping (keep original case for display)
             artist_genre_map[artist_name] = {
                 'spotify_genres': artist_spotify_genres,
                 'wikipedia_genres': [],
                 'spotify_id': artist.get('id'),
-                'popularity': artist.get('popularity', 0)
+                'popularity': artist.get('popularity', 0),
+                'image_url': image_url  # Add image URL here
             }
             
             # Count Spotify genres
@@ -238,6 +245,7 @@ def top_genres(request):
             "time_range": time_range,
             "total_unique_genres": len(sorted_combined_genres),
             "total_artists_analyzed": len(data.get('items', [])),
+            "artists_genre_map": artist_genre_map,  # Add the artist genre mapping
             # Keep additional data for debugging/future use
             "spotify_genres": sorted(spotify_genres.items(), key=lambda x: x[1], reverse=True),
             "wikipedia_genres": sorted(wikipedia_genres.items(), key=lambda x: x[1], reverse=True),
