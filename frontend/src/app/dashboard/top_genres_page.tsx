@@ -27,19 +27,12 @@ interface GenreData {
 }
 
 interface ApiResponse {
+  genres: [string, number][]
+  time_range: string
+  total_unique_genres: number
+  total_artists_analyzed: number
   spotify_genres: [string, number][]
   wikipedia_genres: [string, number][]
-  combined_genres: [string, number][]
-  artist_breakdown: any
-  stats: {
-    time_range: string
-    total_artists_analyzed: number
-    spotify_unique_genres: number
-    wikipedia_unique_genres: number
-    combined_unique_genres: number
-    artists_with_wikipedia_genres: number
-  }
-  use_wikipedia: boolean
 }
 
 // Color palette for genres - updated to match earthy theme
@@ -132,7 +125,7 @@ export default function TopGenresPage() {
 
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
-      const response = await fetch(`${backendUrl}/top_genres/?time_range=${range}&limit=50`, {
+      const response = await fetch(`${backendUrl}/top_genres/?time_range=${range}`, {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
@@ -144,9 +137,9 @@ export default function TopGenresPage() {
       }
 
       const data: ApiResponse = await response.json()
-
+      console.log(data)
       // Use combined_genres from the actual response structure
-      const genresArray = data.combined_genres || data.spotify_genres || []
+      const genresArray = data.genres || []
 
       if (!Array.isArray(genresArray)) {
         throw new Error("No valid genres array found in response")
@@ -445,7 +438,7 @@ export default function TopGenresPage() {
             <TabsContent value="grid" className="space-y-6">
               {/* Genre Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {filteredGenres.map((genre, index) => (
+                {filteredGenres.slice(0,15).map((genre, index) => (
                   <Card
                     key={genre.name}
                     className="border-sage/30 hover:scale-105 transition-all cursor-pointer group"
