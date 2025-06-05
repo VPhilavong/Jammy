@@ -345,10 +345,10 @@ export default function TopGenresPage() {
 
         // Check both Spotify and Wikipedia genres (case-insensitive)
         const hasSpotifyGenre = spotify_genres.some((genre: string) =>
-          genre.toLowerCase() === genreName.toLowerCase(),
+          genre.toLowerCase() === genreName.toLowerCase()
         )
         const hasWikipediaGenre = wikipedia_genres.some((genre: string) =>
-          genre.toLowerCase() === genreName.toLowerCase(),
+          genre.toLowerCase() === genreName.toLowerCase()
         )
 
         if (hasSpotifyGenre || hasWikipediaGenre) {
@@ -360,6 +360,7 @@ export default function TopGenresPage() {
         }
       })
 
+      console.log(`Found ${matchingArtists.length} artists for genre "${genreName}":`, matchingArtists.map(a => a.name))
       setGenreArtists(matchingArtists)
     } catch (err) {
       console.error("Error filtering genre artists:", err)

@@ -163,8 +163,10 @@ def top_genres(request):
         data = response.json()
         spotify_genres = {}
         wikipedia_genres = {}
-        combined_genres = {}
         artist_genre_map = {}
+        
+        # Track unique artists per genre (genre_name -> set of artist names)
+        artist_genre_counts = {}
         
         # Initialize Wikipedia service for normalization
         if use_wikipedia:
@@ -187,15 +189,18 @@ def top_genres(request):
                 'wikipedia_genres': [],
                 'spotify_id': artist.get('id'),
                 'popularity': artist.get('popularity', 0),
-                'image_url': image_url  # Add image URL here
+                'image_url': image_url
             }
             
-            # Count Spotify genres
+            # Count Spotify genres (for separate tracking)
             for genre in artist_spotify_genres:
                 spotify_genres[genre] = spotify_genres.get(genre, 0) + 1
-                # Combine by lowercase key
+                
+                # Track unique artists per genre
                 genre_lower = genre.lower()
-                combined_genres[genre_lower] = combined_genres.get(genre_lower, 0) + 1
+                if genre_lower not in artist_genre_counts:
+                    artist_genre_counts[genre_lower] = set()
+                artist_genre_counts[genre_lower].add(artist_name)
         
         # If Wikipedia integration is enabled, get Wikipedia genres
         if use_wikipedia:
@@ -225,27 +230,33 @@ def top_genres(request):
                     if wiki_genres:
                         artist_genre_map[artist_name]['wikipedia_genres'] = wiki_genres
                         
-                        # Count Wikipedia genres
+                        # Count Wikipedia genres (for separate tracking)
                         for genre in wiki_genres:
                             wikipedia_genres[genre] = wikipedia_genres.get(genre, 0) + 1
-                            # Combine by lowercase key
+                            
+                            # Track unique artists per genre
                             genre_lower = genre.lower()
-                            combined_genres[genre_lower] = combined_genres.get(genre_lower, 0) + 1
+                            if genre_lower not in artist_genre_counts:
+                                artist_genre_counts[genre_lower] = set()
+                            artist_genre_counts[genre_lower].add(artist_name)
                 
                 except Exception as e:
                     print(f"Failed to get Wikipedia genres for {artist_name}: {e}")
                     continue
         
-        # Sort genres by frequency - use combined genres for frontend compatibility
+        # Convert sets to unique artist counts
+        combined_genres = {genre: len(artists) for genre, artists in artist_genre_counts.items()}
+        
+        # Sort genres by unique artist count
         sorted_combined_genres = sorted(combined_genres.items(), key=lambda x: x[1], reverse=True)
         
         # Format response to match frontend expectations
         response_data = {
-            "genres": sorted_combined_genres,  # Frontend expects this key
+            "genres": sorted_combined_genres,  # Now counts unique artists, not mentions
             "time_range": time_range,
             "total_unique_genres": len(sorted_combined_genres),
             "total_artists_analyzed": len(data.get('items', [])),
-            "artists_genre_map": artist_genre_map,  # Add the artist genre mapping
+            "artists_genre_map": artist_genre_map,
             # Keep additional data for debugging/future use
             "spotify_genres": sorted(spotify_genres.items(), key=lambda x: x[1], reverse=True),
             "wikipedia_genres": sorted(wikipedia_genres.items(), key=lambda x: x[1], reverse=True),
