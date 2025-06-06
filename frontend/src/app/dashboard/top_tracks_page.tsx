@@ -39,6 +39,8 @@ type LoadingState = "idle" | "loading" | "success" | "error"
 const CACHE_KEY = "topTracks"
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+
 export default function TopTracksPage(): React.JSX.Element {
   const [tracks, setTracks] = useState<Track[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -85,7 +87,7 @@ export default function TopTracksPage(): React.JSX.Element {
       })
 
       if (uniqueArtistNames.size > 0) {
-        const artistsResponse = await fetch("http://localhost:8000/artists/bulk-cached/", {
+        const artistsResponse = await fetch(`${backendUrl}/artists/bulk-cached/`, {
           method: "POST",
           credentials: "include",
           headers: {
@@ -149,7 +151,7 @@ export default function TopTracksPage(): React.JSX.Element {
     setError(null)
 
     try {
-      const response = await fetch("http://localhost:8000/top_tracks", {
+      const response = await fetch(`${backendUrl}/top_tracks/`, {  // Add trailing slash
         method: "GET",
         credentials: "include",
         headers: {
@@ -447,12 +449,7 @@ export default function TopTracksPage(): React.JSX.Element {
                 hoveredTrack === track.id ? "opacity-100" : "opacity-0"
               }`}
             >
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary w-8 h-8">
-                <Heart className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary w-8 h-8">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
+              
             </div>
           </div>
         </div>

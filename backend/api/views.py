@@ -579,3 +579,42 @@ def clear_cache(request):
         return Response({'message': 'Cache cleared successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+def logout(request):
+    """Logout user by clearing session and Spotify token"""
+    try:
+        session_key = request.session.session_key
+        
+        if session_key:
+            # Delete the Spotify token from database
+            try:
+                spotify_token = SpotifyToken.objects.get(user=session_key)
+                spotify_token.delete()
+            except SpotifyToken.DoesNotExist:
+                pass  # Token doesn't exist, that's fine
+            
+            # Clear any cached data for this user
+            cache_patterns = [
+                f"top_tracks:{session_key}:*",
+                f"top_artists:{session_key}:*", 
+                f"top_genres_enhanced:{session_key}:*"
+            ]
+            
+            # Note: Django's cache doesn't support pattern deletion by default
+            # This is a simplified approach - in production you might want to use Redis directly
+            # or implement a more sophisticated cache clearing mechanism
+            
+            # Clear the session
+            request.session.flush()
+        
+        return Response({
+            'message': 'Successfully logged out',
+            'success': True
+        })
+        
+    except Exception as e:
+        return Response({
+            'error': str(e),
+            'success': False
+        }, status=500)

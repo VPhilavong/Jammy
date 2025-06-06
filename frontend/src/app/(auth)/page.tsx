@@ -1,141 +1,87 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
-import { Music, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
-export default function LoginPage() {
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+
+export default function MinimalLoginPage() {
   const handleSpotifyLogin = () => {
-    window.location.href = "http://localhost:8000/login"
+    window.open(`${backendUrl}/login/`, '_self')
   }
 
   return (
-    <div
-      className="min-h-screen relative overflow-hidden"
-      style={{ background: `linear-gradient(135deg, #283618 0%, #606c38 100%)` }}
-    >
-      {/* Animated background elements */}
-      <div className="absolute inset-0">
-        <div
-          className="absolute top-20 left-20 w-72 h-72 rounded-full blur-3xl animate-pulse opacity-30"
-          style={{ backgroundColor: "#dda15e" }}
-        ></div>
-        <div
-          className="absolute bottom-20 right-20 w-96 h-96 rounded-full blur-3xl animate-pulse delay-1000 opacity-20"
-          style={{ backgroundColor: "#bc6c25" }}
-        ></div>
-        <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full blur-3xl animate-pulse delay-500 opacity-25"
-          style={{ backgroundColor: "#fefae0" }}
-        ></div>
-      </div>
-
-      {/* Dot pattern overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: `radial-gradient(circle, rgba(221, 161, 94, 0.1) 1px, transparent 1px)`,
-          backgroundSize: "30px 30px",
-        }}
-      ></div>
-
-      <div className="relative z-10 flex min-h-screen">
-        {/* Left side - Login Form */}
-        <div className="flex w-full lg:w-1/2 flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-12">
-          <div className="w-full max-w-md">
-            {/* Logo and branding */}
-            <div className="text-center mb-12">
-              <h1 className="text-3xl font-bold text-cream mb-2">Jammy</h1>
-              <p className="text-sm text-cream">Your music, your vibe</p>
+    <div className="min-h-screen bg-[#1a1f2e] flex">
+      {/* Left side - Login Form */}
+      <div className="flex w-full lg:w-1/2 flex-col justify-center px-8 py-12 lg:px-16">
+        <div className="w-full max-w-sm mx-auto">
+          {/* Logo */}
+          <div className="mb-16">
+            <div className="mb-8">
+              <span className="text-xl font-semibold text-white">Jammy</span>
             </div>
+          </div>
 
-            {/* Welcome section */}
-            <div className="text-center mb-8">
-              <h2 className="text-4xl font-bold text-cream mb-3">Welcome back</h2>
-              <p className="text-lg text-cream">Continue your musical journey</p>
-            </div>
+          {/* Welcome section */}
+          <div className="mb-12">
+            <h1 className="text-4xl font-light text-white mb-3 tracking-tight">Welcome back</h1>
+            <p className="text-gray-400 text-lg">Sign in to continue</p>
+          </div>
 
-            {/* Login form */}
-            <div className="space-y-6">
-              <Button
-                onClick={handleSpotifyLogin}
-                className="w-full h-14 bg-[#1DB954] hover:bg-[#1ed760] text-white font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-              >
-                <Image src="/spotify_logo.png" alt="Spotify Logo" width={24} height={24} className="mr-3" />
-                Continue with Spotify
-              </Button>
+          {/* Login form */}
+          <div className="space-y-4">
+            <Button
+              onClick={handleSpotifyLogin}
+              className="w-full h-14 bg-[#4ade80] hover:bg-[#22c55e] text-[#1a1f2e] font-medium rounded-lg transition-colors duration-200"
+            >
+              <Image src="/spotify_logo.png" alt="Spotify Logo" width={24} height={24} className="mr-3" />
+              Continue with Spotify
+            </Button>
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-sage"></div>
-                </div>
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-600"></div>
               </div>
-
-              <Link href="https://www.spotify.com/us/signup" className="block w-full">
-                <Button
-                  variant="outline"
-                  className="w-full h-14 border-2 border-gold text-cream hover:text-cream font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 bg-transparent hover:bg-gold/10"
-                >
-                  <Sparkles className="mr-3 h-5 w-5" />
-                  Create Spotify Account
-                </Button>
-              </Link>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-[#1a1f2e] text-gray-400">or</span>
+              </div>
             </div>
+
+            <Link href="https://www.spotify.com/us/signup" className="block w-full">
+              <Button
+                variant="outline"
+                className="w-full h-14 border bg-[#4ade80] border-gray-600 text-[#1a1f2e] hover:bg-[#22c55e] font-medium rounded-lg transition-colors duration-200"
+              >
+                Create account
+              </Button>
+            </Link>
           </div>
         </div>
+      </div>
 
-        {/* Right side - Visual content */}
-        <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12">
-          <div className="relative">
-            {/* Main content card */}
-            <div
-              className="backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-gold/20"
-              style={{
-                backgroundColor: "rgba(254, 250, 224, 0.05)",
-              }}
-            >
-              <div className="text-center">
-                <div
-                  className="w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center shadow-lg"
-                  style={{ background: `linear-gradient(135deg, #bc6c25 0%, #283618 100%)` }}
-                >
-                  <Music className="h-12 w-12 text-cream" />
-                </div>
-                <h3 className="text-2xl font-bold text-cream mb-4">Discover Your Sound</h3>
-                <p className="text-lg leading-relaxed text-cream">
-                  Connect with millions of songs, create playlists, and share your musical taste with friends.
-                </p>
-              </div>
+      {/* Right side - Visual content */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#232937] items-center justify-center p-16">
+        <div className="max-w-md text-center">
+          <h2 className="text-2xl font-light text-white mb-4 tracking-tight">Your music, simplified</h2>
+
+          <p className="text-gray-400 text-lg leading-relaxed mb-12">Discover your top genres, artists, and tracks.</p>
+
+          {/* Simple stats */}
+          <div className="grid grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="text-2xl font-light text-white mb-1">50M+</div>
+              <div className="text-sm text-gray-400">Songs</div>
             </div>
-
-            {/* Floating elements */}
-            <div
-              className="absolute -top-6 -right-6 w-12 h-12 rounded-full animate-bounce delay-300"
-              style={{ backgroundColor: "#dda15e" }}
-            ></div>
-            <div
-              className="absolute -bottom-4 -left-4 w-8 h-8 rounded-full animate-bounce delay-700"
-              style={{ backgroundColor: "#bc6c25" }}
-            ></div>
-            <div
-              className="absolute top-1/2 -right-8 w-6 h-6 rounded-full animate-bounce delay-1000"
-              style={{ backgroundColor: "#283618" }}
-            ></div>
+            <div>
+              <div className="text-2xl font-light text-white mb-1">1M+</div>
+              <div className="text-sm text-gray-400">Artists</div>
+            </div>
+            <div>
+              <div className="text-2xl font-light text-white mb-1">24/7</div>
+              <div className="text-sm text-gray-400">Streaming</div>
+            </div>
           </div>
-
-          {/* Video background */}
-          {/*
-          <video
-            className="absolute inset-0 w-full h-full object-cover opacity-10 rounded-3xl"
-            autoPlay
-            loop
-            muted
-            playsInline
-          >
-            <source src="/Die_With_A_Smile.mp4" type="video/mp4" />
-          </video>
-          */}
         </div>
       </div>
     </div>
