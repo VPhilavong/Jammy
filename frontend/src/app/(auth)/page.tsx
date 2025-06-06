@@ -3,12 +3,21 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
+import { useSearchParams } from "next/navigation"
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
 
 export default function MinimalLoginPage() {
+  const searchParams = useSearchParams()
+  const showDialog = searchParams.get('show_dialog') === 'true'
+
   const handleSpotifyLogin = () => {
-    window.open(`${backendUrl}/login/`, '_self')
+    // Add show_dialog parameter if it was passed from logout
+    const loginUrl = showDialog 
+      ? `${backendUrl}/login/?show_dialog=true`
+      : `${backendUrl}/login/`
+    
+    window.open(loginUrl, '_self')
   }
 
   return (

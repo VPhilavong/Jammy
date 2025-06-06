@@ -53,7 +53,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             })
 
             if (response.ok) {
-                window.location.href = '/'
+                // Clear any cached data
+                localStorage.clear()
+                sessionStorage.clear()
+                
+                // Redirect to login page with show_dialog=true parameter
+                window.location.href = '/?show_dialog=true'
             } else {
                 console.error('Logout failed')
             }
