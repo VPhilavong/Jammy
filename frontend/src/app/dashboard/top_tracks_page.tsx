@@ -44,6 +44,7 @@ const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000
 export default function TopTracksPage(): React.JSX.Element {
   const [tracks, setTracks] = useState<Track[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [timeRange, setTimeRange] = useState("medium_term")
   const [loadingState, setLoadingState] = useState<LoadingState>("idle")
   const [hoveredTrack, setHoveredTrack] = useState<string | null>(null)
   const [artistsLoading, setArtistsLoading] = useState<boolean>(false)
@@ -112,9 +113,9 @@ export default function TopTracksPage(): React.JSX.Element {
     }
   }, [])
 
-  const getCachedData = useCallback(() => {
+  const getCachedData = useCallback((range: string) => {
     try {
-      const cached = localStorage.getItem(CACHE_KEY)
+      const cached = localStorage.getItem(`${CACHE_KEY}_${range}`)
       if (cached) {
         const parsedData = JSON.parse(cached)
         const isExpired = Date.now() - parsedData.timestamp > CACHE_DURATION
@@ -129,10 +130,10 @@ export default function TopTracksPage(): React.JSX.Element {
     return null
   }, [])
 
-  const setCacheData = useCallback((data: Track[]) => {
+  const setCacheData = useCallback((data: Track[], range: string) => {
     try {
       localStorage.setItem(
-        CACHE_KEY,
+        `${CACHE_KEY}_${range}`,
         JSON.stringify({
           data,
           timestamp: Date.now(),
@@ -143,7 +144,7 @@ export default function TopTracksPage(): React.JSX.Element {
     }
   }, [])
 
-  const fetchTopTracks = useCallback(async (): Promise<void> => {
+  const fetchTopTracks = useCallback(async (range: string): Promise<void> => {
     // Only show loading if we don't have cached data
     if (cachedData.length === 0) {
       setLoadingState("loading")
@@ -151,7 +152,7 @@ export default function TopTracksPage(): React.JSX.Element {
     setError(null)
 
     try {
-      const response = await fetch(`${backendUrl}/top_tracks/`, {  // Add trailing slash
+      const response = await fetch(`${backendUrl}/top_tracks/?time_range=${range}`, {
         method: "GET",
         credentials: "include",
         headers: {
@@ -167,7 +168,7 @@ export default function TopTracksPage(): React.JSX.Element {
 
       // Update tracks and cache
       setTracks(data.items || [])
-      setCacheData(data.items || [])
+      setCacheData(data.items || [], range)
       setLoadingState("success")
 
       // Fetch artist details
@@ -186,7 +187,7 @@ export default function TopTracksPage(): React.JSX.Element {
 
   useEffect(() => {
     // Try to load from cache first
-    const cached = getCachedData()
+    const cached = getCachedData(timeRange)
     if (cached) {
       setTracks(cached)
       setCachedData(cached)
@@ -199,8 +200,21 @@ export default function TopTracksPage(): React.JSX.Element {
     }
 
     // Always fetch fresh data in background
-    fetchTopTracks()
-  }, [getCachedData, fetchTopTracks, fetchArtistDetails])
+    fetchTopTracks(timeRange)
+  }, [timeRange, getCachedData, fetchTopTracks, fetchArtistDetails])
+
+  const getTimeRangeLabel = (range: string) => {
+    switch (range) {
+      case "short_term":
+        return "Last 4 Weeks"
+      case "medium_term":
+        return "Last 6 Months"
+      case "long_term":
+        return "All Time"
+      default:
+        return "Last 6 Months"
+    }
+  }
 
   const SkeletonCard = (): React.JSX.Element => (
     <div className="bg-muted/20 backdrop-blur-sm rounded-lg p-4 border border-border">
@@ -501,7 +515,7 @@ export default function TopTracksPage(): React.JSX.Element {
   }
 
   if (loadingState === "error") {
-    return <ErrorState message={error || "Unknown error"} onRetry={fetchTopTracks} />
+    return <ErrorState message={error || "Unknown error"} onRetry={() => fetchTopTracks(timeRange)} />
   }
 
   return (
@@ -522,11 +536,30 @@ export default function TopTracksPage(): React.JSX.Element {
 
       {/* Content */}
       <div className="relative max-w-7xl mx-auto px-8 py-12">
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-medium text-foreground tracking-tight mb-4">Top Tracks</h1>
-          <p className="text-foreground text-lg font-medium">
+        <div className="text-center mb-8 space-y-4">
+          <h1 className="text-5xl font-medium text-foreground tracking-tight">Top Tracks</h1>
+          <p className="text-muted-foreground text-lg font-medium">
             Showing your top <span className="font-bold text-primary">{tracks.length}</span> tracks
           </p>
+          
+          {/* Time Range Selector */}
+          <div className="flex justify-center gap-2">
+            {["short_term", "medium_term", "long_term"].map((range) => (
+              <Button
+                key={range}
+                variant={timeRange === range ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTimeRange(range)}
+                className={
+                  timeRange === range
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground"
+                }
+              >
+                {getTimeRangeLabel(range)}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
