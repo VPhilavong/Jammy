@@ -51,7 +51,7 @@ export default function MinimalLoginPage() {
             <Link href="https://www.spotify.com/us/signup" className="block w-full">
               <Button
                 variant="outline"
-                className="w-full h-14 border border-gray-600 text-white hover:bg-gray-800/50 font-medium rounded-lg transition-colors duration-200"
+                className="w-full h-14 border bg-[#4ade80] border-gray-600 text-[#1a1f2e] hover:bg-[#22c55e] font-medium rounded-lg transition-colors duration-200"
               >
                 Create account
               </Button>
