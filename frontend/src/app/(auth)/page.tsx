@@ -4,9 +4,11 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+
 export default function MinimalLoginPage() {
   const handleSpotifyLogin = () => {
-    window.location.href = "http://localhost:8000/login"
+    window.open(`${backendUrl}/login/`, '_self')
   }
 
   return (

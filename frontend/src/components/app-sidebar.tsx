@@ -36,23 +36,24 @@ const navigationItems = [
     },
 ]
 
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const pathname = usePathname()
     const router = useRouter()
 
     const handleLogout = async () => {
         try {
-            const response = await fetch('http://localhost:8000/logout/', {
+            const response = await fetch(`${backendUrl}/logout/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include', // Important for session cookies
+                credentials: 'include',
             })
 
             if (response.ok) {
-                // Force a full page refresh to clear any cached state
-                window.location.href = '/' // or '/' for home page
+                window.location.href = '/'
             } else {
                 console.error('Logout failed')
             }
